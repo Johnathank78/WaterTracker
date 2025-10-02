@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0ab0ff">
+  <title>Water Tracker</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="resources/imgs/icon-192.png">
+  <link rel="stylesheet" href="resources/css/style.css">
+</head>
+<body>
+  <header class="app-header simple">
+    <img class="logo" src="resources/imgs/watertracker.png" alt="Water Tracker logo" />
+    <button id="openSettingsBtn" class="icon-btn" title="Paramètres" aria-label="Ouvrir les paramètres">⚙️</button>
+  </header>
+
+  <main class="home with-rail">
+    <section class="progress-card">
+      <div class="gauge rect">
+        <canvas id="gaugeCanvas" width="400" height="700" aria-hidden="true"></canvas>
+        <div class="gauge-center">
+          <div id="progressText" class="progress-text">0 / 2000 ml</div>
+          <div id="percentText" class="percent-text">0%</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom profiles rail -->
+  <footer class="bottom-rail">
+    <div class="rail-inner">
+      <div class="rail-title">Rapide</div>
+      <div id="profilesRail" class="profiles-rail" aria-live="polite"></div>
+    </div>
+  </footer>
+
+  <!-- Paramètres -->
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog">
+      <header class="dialog-hd">
+        <h3>Paramètres</h3>
+        <button value="cancel" class="icon-btn">✖️</button>
+      </header>
+
+      <section class="goal">
+        <label for="goalInput">Objectif quotidien (ml)</label>
+        <div class="goal-row wrap">
+          <input id="goalInput" type="number" min="200" step="50" value="2000">
+          <button id="saveGoalBtn" class="btn primary">Enregistrer</button>
+        </div>
+      </section>
+
+      <section class="reminder">
+        <div class="section-title">
+          <h4>Rappels au lancement</h4>
+        </div>
+
+        <div id="remindersList" class="reminders-list"></div>
+
+        <div class="reminder-grid add wrap">
+          <div>
+            <label for="newReminderAmount">Quantité (ml)</label>
+            <input id="newReminderAmount" type="number" min="100" step="50" value="500">
+          </div>
+          <div>
+            <label for="newReminderTime">Avant l'heure</label>
+            <input id="newReminderTime" type="time" value="09:00">
+          </div>
+          <div class="actions">
+            <button id="addReminderBtn" class="btn">Ajouter</button>
+            <button id="enableNotifBtn" class="btn outline">Activer notifications</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="profiles-admin">
+        <div class="section-title">
+          <h4>Profils prédéfinis</h4>
+          <div class="responsive-actions">
+            <button id="manageProfilesBtn" class="btn ghost">Gérer</button>
+            <button id="addProfileBtn" class="btn">Nouveau</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="history">
+        <h4>Historique du jour (3 derniers)</h4>
+        <ul id="historyList" class="history-list" aria-live="polite"></ul>
+        <div class="actions-row wrap">
+          <button id="undoBtn" class="btn ghost">Annuler dernière</button>
+          <button id="resetDayBtn" class="btn danger">Réinitialiser le jour</button>
+        </div>
+      </section>
+
+      <menu class="dialog-ft">
+        <button class="btn primary" value="cancel">Fermer</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Modals de profil -->
+  <dialog id="profileDialog" class="dialog">
+    <form method="dialog" id="profileForm">
+      <h3 id="profileDialogTitle">Nouveau profil</h3>
+      <input type="hidden" id="profileId">
+      <label>Nom
+        <input id="profileName" type="text" placeholder="Verre, Bouteille..." required>
+      </label>
+      <label>Volume (ml)
+        <input id="profileMl" type="number" min="10" step="10" required>
+      </label>
+      <label>Icône
+        <select id="profileIcon">
+          <option value="mouth">🙂 Bouche</option>
+          <option value="glass">🥛 Verre</option>
+          <option value="mug">☕ Tasse</option>
+          <option value="bottle">🧴 Bouteille</option>
+        </select>
+      </label>
+      <menu>
+        <button value="cancel" class="btn ghost">Annuler</button>
+        <button id="saveProfileBtn" value="default" class="btn primary">Enregistrer</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="manageDialog" class="dialog">
+    <form method="dialog">
+      <h3>Gérer les profils</h3>
+      <div id="manageList" class="manage-list"></div>
+      <menu>
+        <button value="cancel" class="btn primary">Fermer</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="resources/js/jquery.js"></script>
+  <script src="resources/js/app.js"></script>
+</body>
+</html>

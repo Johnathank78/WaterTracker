@@ -1,0 +1,20 @@
+{
+  "name": "Water Tracker",
+  "short_name": "Water",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f6fbff",
+  "theme_color": "#0ab0ff",
+  "icons": [
+    {
+      "src": "resources/imgs/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "resources/imgs/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
