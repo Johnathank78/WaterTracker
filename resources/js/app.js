@@ -282,8 +282,7 @@ const isMobile = /Mobi/.test(navigator.userAgent);
 var current_page = "app"; // app | settings
 
 // Wave animation variables
-const canvas = document.getElementById('waterGauge');
-const ctx = canvas.getContext('2d');
+var ctx, canvas
 
 let waveOffset = 0;
 const waveAmplitude = 20;
@@ -298,6 +297,8 @@ $('img').attr('draggable', false);
 // ON LOAD
 $(document).ready(function(){
   // rectangular waterGauge in .waterGauge using canvas 2d
+  canvas = document.getElementById('waterGauge');
+  ctx = canvas.getContext('2d');
 
   // Water level variables
   ml = water_read(); // initial ml value

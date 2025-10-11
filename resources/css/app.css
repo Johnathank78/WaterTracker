@@ -56,6 +56,7 @@
 
 html{
     overscroll-behavior: none;
+    background-color: var(--bg);
 }
 
 body{
@@ -67,9 +68,15 @@ body{
     overflow: hidden;
 
     overscroll-behavior: none;
+    background-color: var(--bg);
 }
 
 .app{
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+
     width: 100vw;
     height: 100vh; /*REPLACE*/
 
@@ -109,7 +116,7 @@ body{
     justify-content: center;
     align-items: center;
 
-    top: 20px;
+    top: 30px;
     right: 20px;    
 
     width: 30px;
@@ -253,4 +260,18 @@ body{
             -moz-user-select: none;
             -ms-user-select: none;
                 user-select: none;
+}
+
+.versionNB{
+    position: absolute;
+    top: 30px;
+    left: 20px;
+
+    background: linear-gradient(to right, var(--c-start), var(--c-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    font-size: 20px;
+    font-weight: 800;
 }
