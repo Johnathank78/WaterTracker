@@ -7,14 +7,9 @@
   "theme_color": "#0ab0ff",
   "icons": [
     {
-      "src": "resources/imgs/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "resources/imgs/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/WaterTracker/resources/imgs/icon.png",
+      "type": "image/png",
+      "sizes": "500x500"
     }
   ]
 }

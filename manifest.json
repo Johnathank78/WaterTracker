@@ -1,35 +1,18 @@
 {
-  "name": "BetterPNL",
-  "short_name": "BetterPNL",
-  "description": "WebApp Binance helper",
-  "start_url": "/BetterPNL/index.html",
+  "name": "Water Tracker",
+  "short_name": "WaterTracker",
+  "description": "WebApp WaterTracker",
+  "start_url": "/WaterTracker/index.html",
   "display_override": ["fullscreen", "minimal-ui"],
   "display": "standalone",
-  "background_color": "#181a20",
-  "theme_color": "#181a20",
+  "background_color": "#f6fbff",
+  "theme_color": "#0ab0ff",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/BetterPNL/resources/imgs/icon.png",
+      "src": "/WaterTracker/resources/imgs/icon.png",
       "type": "image/png",
       "sizes": "500x500",
-      "purpose": "any"
-    }
-  ],
-  "screenshots" : [
-    {
-      "src": "/BetterPNL/resources/imgs/smallSS.png",
-      "sizes": "430x870",
-      "type": "image/png",
-      "label": "Homescreen",
-      "purpose": "any"
-    },
-    {
-      "src": "/BetterPNL/resources/imgs/wideSS.png",
-      "sizes": "1905x962",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Homescreen",
       "purpose": "any"
     }
   ]
