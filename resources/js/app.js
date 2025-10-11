@@ -85,171 +85,179 @@ function water_save(val){
 // GAUGE
 
 function resizeCanvas() {
-  canvas.width = canvas.clientWidth;
-  canvas.height = canvas.clientHeight;
-  drawGauge(ml);
+    // Get the device pixel ratio to scale the canvas for high-res screens
+    const dpr = window.devicePixelRatio || 1;
+
+    // Set the canvas drawing buffer size to match the display size scaled by DPR
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+
+    drawGauge(ml);
 }
 
 function drawGauge(mlValue) {
-  const width = canvas.width;
-  const height = canvas.height;
-  const radius = Math.min(width, height) * 0.05; // Radius for rounded corners
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.width;
+    const height = canvas.height;
+    const radius = Math.min(width, height) * 0.05; // Radius for rounded corners
 
-  // Get background color from CSS variable
-  const rootStyles = getComputedStyle(document.documentElement);
-  const bgColor = rootStyles.getPropertyValue('--bg').trim() || '#f0f0f0';
-  const colorStart = rootStyles.getPropertyValue('--c-start').trim() || '#00aaff';
-  const colorEnd = rootStyles.getPropertyValue('--c-end').trim() || '#0077cc';
+    // Get background color from CSS variable for theme consistency
+    const rootStyles = getComputedStyle(document.documentElement);
+    const bgColor = rootStyles.getPropertyValue('--bg').trim() || '#f0f0f0';
+    const colorStart = rootStyles.getPropertyValue('--c-start').trim() || '#00aaff';
+    const colorEnd = rootStyles.getPropertyValue('--c-end').trim() || '#0077cc';
 
-  // Clear the canvas
-  ctx.clearRect(0, 0, width, height);
+    // Clear the canvas for redrawing
+    ctx.clearRect(0, 0, width, height);
 
-  // Draw the gauge background (rounded rectangle)
-  ctx.save();
-  ctx.beginPath();
-  if (ctx.roundRect) {
-      ctx.roundRect(4, 4, width - 8, height - 8, radius);
-  } else {
-      ctx.moveTo(4 + radius, 4);
-      ctx.lineTo(width - 4 - radius, 4);
-      ctx.quadraticCurveTo(width - 4, 4, width - 4, 4 + radius);
-      ctx.lineTo(width - 4, height - 4 - radius);
-      ctx.quadraticCurveTo(width - 4, height - 4, width - 4 - radius, height - 4);
-      ctx.lineTo(4 + radius, height - 4);
-      ctx.quadraticCurveTo(4, height - 4, 4, height - 4 - radius);
-      ctx.lineTo(4, 4 + radius);
-      ctx.quadraticCurveTo(4, 4, 4 + radius, 4);
-  }
-  ctx.closePath();
-  ctx.fillStyle = bgColor;
-  ctx.fill();
-  ctx.restore();
+    // --- Draw the gauge background (rounded rectangle) ---
+    ctx.save();
+    ctx.beginPath();
+    // Use the modern ctx.roundRect if available, with a fallback for older browsers
+    if (ctx.roundRect) {
+        ctx.roundRect(4, 4, width - 8, height - 8, radius);
+    } else {
+        // Manual fallback for rounded rectangle
+        ctx.moveTo(4 + radius, 4);
+        ctx.lineTo(width - 4 - radius, 4);
+        ctx.quadraticCurveTo(width - 4, 4, width - 4, 4 + radius);
+        ctx.lineTo(width - 4, height - 4 - radius);
+        ctx.quadraticCurveTo(width - 4, height - 4, width - 4 - radius, height - 4);
+        ctx.lineTo(4 + radius, height - 4);
+        ctx.quadraticCurveTo(4, height - 4, 4, height - 4 - radius);
+        ctx.lineTo(4, 4 + radius);
+        ctx.quadraticCurveTo(4, 4, 4 + radius, 4);
+    }
+    ctx.closePath();
+    ctx.fillStyle = bgColor;
+    ctx.fill();
+    ctx.restore();
 
-  // Water level (e.g., mlValue as percent of max)
-  const minFillPercent = 0.02;
-  const maxFillPercent = 0.92;
-  const percent = Math.min(mlValue / targetMl, 1);
-  const fillRange = maxFillPercent - minFillPercent;
-  const waterLevel = height * (minFillPercent + fillRange * percent);
+    // --- Calculate water level ---
+    // The water fill has a minimum and maximum level to avoid touching the edges
+    const minFillPercent = 0.02;
+    const maxFillPercent = 0.92;
+    const percent = Math.min(mlValue / targetMl, 1);
+    const fillRange = maxFillPercent - minFillPercent;
+    const waterLevel = height * (minFillPercent + fillRange * (1 - percent)); // Inverted for y-axis
 
-  // Clip to rounded rectangle for water
-  ctx.save();
-  ctx.beginPath();
-  if (ctx.roundRect) {
-      ctx.roundRect(4, 4, width - 8, height - 8, radius);
-  } else {
-      ctx.moveTo(4 + radius, 4);
-      ctx.lineTo(width - 4 - radius, 4);
-      ctx.quadraticCurveTo(width - 4, 4, width - 4, 4 + radius);
-      ctx.lineTo(width - 4, height - 4 - radius);
-      ctx.quadraticCurveTo(width - 4, height - 4, width - 4 - radius, height - 4);
-      ctx.lineTo(4 + radius, height - 4);
-      ctx.quadraticCurveTo(4, height - 4, 4, height - 4 - radius);
-      ctx.lineTo(4, 4 + radius);
-      ctx.quadraticCurveTo(4, 4, 4 + radius, 4);
-      ctx.stroke();
-  }
-  ctx.closePath();
-  ctx.clip();
+    // --- Clip the drawing area to the rounded rectangle for the water effect ---
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) {
+        ctx.roundRect(4, 4, width - 8, height - 8, radius);
+    } else {
+        // Manual fallback for rounded rectangle
+        ctx.moveTo(4 + radius, 4);
+        ctx.lineTo(width - 4 - radius, 4);
+        ctx.quadraticCurveTo(width - 4, 4, width - 4, 4 + radius);
+        ctx.lineTo(width - 4, height - 4 - radius);
+        ctx.quadraticCurveTo(width - 4, height - 4, width - 4 - radius, height - 4);
+        ctx.lineTo(4 + radius, height - 4);
+        ctx.quadraticCurveTo(4, height - 4, 4, height - 4 - radius);
+        ctx.lineTo(4, 4 + radius);
+        ctx.quadraticCurveTo(4, 4, 4 + radius, 4);
+    }
+    ctx.closePath();
+    ctx.clip();
 
-  // Create vertical gradient for water
-  const gradient = ctx.createLinearGradient(0, height - waterLevel, 0, height);
-  gradient.addColorStop(0, colorStart);
-  gradient.addColorStop(1, colorEnd);
+    // --- Draw the water with waves ---
+    // Create a vertical gradient for the water fill
+    const gradient = ctx.createLinearGradient(0, waterLevel, 0, height);
+    gradient.addColorStop(0, colorStart);
+    gradient.addColorStop(1, colorEnd);
 
-  // Draw background wave (lighter, offset)
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(0, height - waterLevel);
+    // Draw background wave (lighter, offset for parallax effect)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, waterLevel);
+    const bgWaveAmplitude = (waveAmplitude * 0.7) * dpr;
+    const bgWaveLength = (waveLength * 1.2) * dpr;
+    const bgWaveOffset = waveOffset + Math.PI / 2;
+    for (let x = 0; x <= width; x += 2) {
+        const y = bgWaveAmplitude * Math.sin((x / bgWaveLength) * 2 * Math.PI + bgWaveOffset) + waterLevel;
+        ctx.lineTo(x, y);
+    }
+    ctx.lineTo(width, height);
+    ctx.lineTo(0, height);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(170, 217, 255, 0.7)'; // Lighter, semi-transparent color
+    ctx.fill();
+    ctx.restore();
 
-  const bgWaveAmplitude = waveAmplitude * 0.7;
-  const bgWaveLength = waveLength * 1.2;
-  const bgWaveOffset = waveOffset + Math.PI / 2;
+    // Draw main animated wave
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, waterLevel);
+    const scaledWaveAmplitude = waveAmplitude * dpr;
+    const scaledWaveLength = waveLength * dpr;
+    for (let x = 0; x <= width; x += 2) {
+        const y = scaledWaveAmplitude * Math.sin((x / scaledWaveLength) * 2 * Math.PI + waveOffset) + waterLevel;
+        ctx.lineTo(x, y);
+    }
+    ctx.lineTo(width, height);
+    ctx.lineTo(0, height);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.restore();
 
-  for (let x = 0; x <= width; x += 2) {
-      const y = bgWaveAmplitude * Math.sin((x / bgWaveLength) * 2 * Math.PI + bgWaveOffset) + (height - waterLevel);
-      ctx.lineTo(x, y);
-  }
-  ctx.lineTo(width, height);
-  ctx.lineTo(0, height);
-  ctx.closePath();
+    // Restore context to remove the clipping path
+    ctx.restore();
 
-  ctx.fillStyle = 'rgba(170, 217, 255, 0.7)';
-  ctx.fill();
-  ctx.restore();
+    // --- Draw thick rounded white border ---
+    ctx.save();
+    ctx.strokeStyle = '#fff';
+    // Scale the line width by the device pixel ratio to keep it consistent
+    ctx.lineWidth = 8 * dpr;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (ctx.roundRect) {
+        ctx.roundRect(4, 4, width - 8, height - 8, radius);
+        ctx.stroke();
+    } else {
+        // Manual fallback for rounded rectangle stroke
+        ctx.moveTo(4 + radius, 4);
+        ctx.lineTo(width - 4 - radius, 4);
+        ctx.quadraticCurveTo(width - 4, 4, width - 4, 4 + radius);
+        ctx.lineTo(width - 4, height - 4 - radius);
+        ctx.quadraticCurveTo(width - 4, height - 4, width - 4 - radius, height - 4);
+        ctx.lineTo(4 + radius, height - 4);
+        ctx.quadraticCurveTo(4, height - 4, 4, height - 4 - radius);
+        ctx.lineTo(4, 4 + radius);
+        ctx.quadraticCurveTo(4, 4, 4 + radius, 4);
+        ctx.stroke();
+    }
+    ctx.restore();
 
-  // Draw animated wave at water level (main wave)
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(0, height - waterLevel);
+    // --- Draw text labels (ml / target ml and percentage) ---
+    const centerY = height / 2;
 
-  for (let x = 0; x <= width; x += 2) {
-      const y = waveAmplitude * Math.sin((x / waveLength) * 2 * Math.PI + waveOffset) + (height - waterLevel);
-      ctx.lineTo(x, y);
-  }
-  ctx.lineTo(width, height);
-  ctx.lineTo(0, height);
-  ctx.closePath();
+    // Check if the text is close to the water level to change its color for readability
+    const isAbsTextNearWater = waterLevel - (centerY - height * 0.03) < 18;
+    const isPercentTextNearWater = waterLevel - (centerY + height * 0.05) < 52;
 
-  ctx.fillStyle = gradient;
-  ctx.fill();
-  ctx.restore();
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-  ctx.restore(); // Remove clip
+    // Draw "ml / target ml" text
+    ctx.font = `bold ${Math.floor(height * 0.034)}px Arial`;
+    ctx.fillStyle = isAbsTextNearWater ? '#fff' : '#000';
+    const absText = `${Math.round(mlValue)} / ${targetMl} ml`;
+    ctx.fillText(absText, width / 2, centerY - height * 0.03);
 
-  // Draw thick rounded white border
-  ctx.save();
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 8;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(4, 4, width - 8, height - 8, radius);
-      ctx.stroke();
-  } else {
-      ctx.beginPath();
-      ctx.moveTo(4 + radius, 4);
-      ctx.lineTo(width - 4 - radius, 4);
-      ctx.quadraticCurveTo(width - 4, 4, width - 4, 4 + radius);
-      ctx.lineTo(width - 4, height - 4 - radius);
-      ctx.quadraticCurveTo(width - 4, height - 4, width - 4 - radius, height - 4);
-      ctx.lineTo(4 + radius, height - 4);
-      ctx.quadraticCurveTo(4, height - 4, 4, height - 4 - radius);
-      ctx.lineTo(4, 4 + radius);
-      ctx.quadraticCurveTo(4, 4, 4 + radius, 4);
-      ctx.stroke();
-  }
-  ctx.restore();
+    // Draw percentage text
+    const percentText = `${Math.round(percent * 100)}%`;
+    ctx.font = `bold ${Math.floor(height * 0.08)}px Arial`;
+    const textGradient = ctx.createLinearGradient(0, 0, width, 0);
+    textGradient.addColorStop(0, colorStart);
+    textGradient.addColorStop(1, colorEnd);
+    ctx.fillStyle = isPercentTextNearWater ? '#fff' : textGradient;
+    ctx.fillText(percentText, width / 2, centerY + height * 0.05);
 
-  // Draw ml / target ml and percentage at center
-  const colWidth = width;
-  const colX = (width - colWidth) / 2;
-  const centerY = height / 2;
-
-  let y = -50;
-  let z = 32;
-
-  const absNearWater = height - waterLevel - Math.abs(centerY - height * 0.05) < 23;
-  const percentNearWater = height - waterLevel - Math.abs(centerY - height * 0.05) < 52;
-
-  ctx.save();
-  ctx.font = `bold ${Math.floor(height * 0.034)}px Arial`;
-  ctx.fillStyle = absNearWater ? '#fff' : '#000'; // Use white if near water, else gradient
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const absText = `${Math.round(mlValue)} / ${targetMl} ml`;
-  ctx.fillText(absText, width / 2, centerY - height * 0.03, colWidth);
-
-  const percentText = `${Math.round(percent * 100)}%`;
-  ctx.font = `bold ${Math.floor(height * 0.08)}px Arial`;
-  const textGradient = ctx.createLinearGradient(colX, 0, colX + colWidth, 0);
-  textGradient.addColorStop(0, colorStart);
-  textGradient.addColorStop(1, colorEnd);
-  ctx.fillStyle = percentNearWater ? '#fff' : textGradient; // Use white if near water, else gradient
-  ctx.fillText(percentText, width / 2, centerY + height * 0.05, colWidth);
-
-  ctx.restore();
+    ctx.restore();
 }
 
 function addMl(mlToAdd) {
