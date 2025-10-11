@@ -159,8 +159,9 @@ body{
   height: 96%;
   background-color: #f0f0f0;
   border-radius: 25px;
+
   position: relative;
-  background: transparent;
+  background: var(--bg);
   
   -webkit-box-shadow: 0px 0px 10px 5px var(--shadow);
   box-shadow: 0px 0px 10px 5px var(--shadow);
@@ -180,26 +181,6 @@ body{
     margin-top: auto;
     background-color: var(--card);
     border-top:1px solid #e7f0ff;
-}
-
-.blurBG{
-    z-index: 1000;
-    position: absolute;
-    
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    height: 100vh;
-    width: 100vw;
-
-    top:0;
-    left: 0;
-    
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-
-    display: none;
 }
 
 .footerTitle {
@@ -253,6 +234,56 @@ body{
     font-size: 15px;
     font-weight: bold;
     color: var(--c-end);
+}
+
+.blurBG{
+    z-index: 1000;
+    position: absolute;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 100vh;
+    width: 100vw;
+
+    top:0;
+    left: 0;
+    
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+
+    display: none;
+    opacity: 0;
+    /* Add a transition for the fade effect */
+    transition: opacity 0.15s ease-in-out;
+}
+
+.blurBG > * {
+  display: none;
+}
+
+.parameters_page{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    padding: 20px;
+
+    height: calc(85% - 40px);
+    width: calc(80% - 40px);
+    background-color: white;
+    border-radius: 18px;
+
+    -webkit-box-shadow: 0px 0px 10px 5px var(--shadow);
+    box-shadow: 0px 0px 10px 5px var(--shadow);
+}
+
+.parameters_section{
+    border-radius: 15px;
+
+    -webkit-box-shadow: 0px 0px 10px 5px var(--shadow);
+    box-shadow: 0px 0px 10px 5px var(--shadow);
 }
 
 .noselect{

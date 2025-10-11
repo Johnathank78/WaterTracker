@@ -1,3 +1,112 @@
+// CLASS
+class SlideTracker {
+  /**
+ * Tracks slide gestures on a given HTML element.
+ * Locks the gesture to either the X or Y axis and reports the
+ * axis and signed distance on each movement tick.
+ */
+
+  /**
+   * @param {HTMLElement} element The element to listen for events on.
+   * @param {function(object): void} onTick The callback function.
+   * @param {object} [options] Optional configuration.
+   * @param {number} [options.axisLockThreshold=10] The number of pixels to move before locking the axis.
+   */
+  constructor(element, onTick, options = {}) {
+    if (!element || typeof onTick !== 'function') {
+      console.error("SlideTracker requires a valid HTML element and an onTick callback function.");
+      return;
+    }
+
+    this.element = element;
+    this.onTick = onTick;
+    this.axisLockThreshold = options.axisLockThreshold || 10; // Pixels
+
+    this.isSliding = false;
+    this.startX = 0;
+    this.startY = 0;
+    this.lockedAxis = null; // Will be 'x', 'y', or null
+
+    // Bind event handlers
+    this._handleSlideStart = this._handleSlideStart.bind(this);
+    this._handleSlideMove = this._handleSlideMove.bind(this);
+    this._handleSlideEnd = this._handleSlideEnd.bind(this);
+
+    this._attachEventListeners();
+  }
+
+  _attachEventListeners() {
+    this.element.addEventListener('mousedown', this._handleSlideStart);
+    window.addEventListener('mousemove', this._handleSlideMove);
+    window.addEventListener('mouseup', this._handleSlideEnd);
+    this.element.addEventListener('touchstart', this._handleSlideStart, { passive: true });
+    window.addEventListener('touchmove', this._handleSlideMove);
+    window.addEventListener('touchend', this._handleSlideEnd);
+  }
+
+  /**
+   * Resets state and records the starting position.
+   * @private
+   */
+  _handleSlideStart(event) {
+    this.isSliding = true;
+    this.lockedAxis = null; // Reset axis lock on new slide
+    const point = event.touches ? event.touches[0] : event;
+    this.startX = point.clientX;
+    this.startY = point.clientY;
+  }
+
+  /**
+   * Determines the axis lock and reports slide data.
+   * @private
+   */
+  _handleSlideMove(event) {
+    if (!this.isSliding) return;
+
+    const point = event.touches ? event.touches[0] : event;
+    const deltaX = point.clientX - this.startX;
+    const deltaY = point.clientY - this.startY;
+
+    // --- AXIS LOCK LOGIC ---
+    // If the axis isn't locked yet, determine it
+    if (!this.lockedAxis) {
+      // Wait until the user has moved past the threshold
+      if (Math.abs(deltaX) > this.axisLockThreshold || Math.abs(deltaY) > this.axisLockThreshold) {
+        // Lock to the axis with the greater movement
+        this.lockedAxis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+      }
+    }
+
+    // --- ON-TICK CALLBACK ---
+    // If the axis is locked, fire the callback with the relevant data
+    if (this.lockedAxis) {
+      this.onTick({
+        axis: this.lockedAxis,
+        // Provide the signed distance for the locked axis
+        distance: this.lockedAxis === 'x' ? deltaX : -1 * deltaY,
+      });
+    }
+  }
+
+  /**
+   * Resets the sliding state.
+   * @private
+   */
+  _handleSlideEnd() {
+    this.isSliding = false;
+    this.lockedAxis = null;
+  }
+
+  destroy() {
+    this.element.removeEventListener('mousedown', this._handleSlideStart);
+    window.removeEventListener('mousemove', this._handleSlideMove);
+    window.removeEventListener('mouseup', this._handleSlideEnd);
+    this.element.removeEventListener('touchstart', this._handleSlideStart);
+    window.removeEventListener('touchmove', this._handleSlideMove);
+    window.removeEventListener('touchend', this._handleSlideEnd);
+  }
+}
+
 // METHODS
 var originalVal = $.fn.val;
 
@@ -14,6 +123,33 @@ jQuery.fn.val = function(){
 };
 
 // UTILITY 
+function showBlurPage(className) {
+  if(className == 'hide') {
+    $(".blurBG").css({ opacity: 0, display: 'none'})
+    return;
+  };
+
+  const $blurBG = $(".blurBG");
+  const $targetPage = $(`.${className}`);
+  
+  // 1. Instantly hide any other pages that might be visible
+  $blurBG.children(':not(.' + className + ')').css('display', 'none');
+
+  // 2. Prepare the target page: make it part of the layout but fully transparent
+  $targetPage.css({
+    'display': 'flex',
+    'opacity': '0'
+  });
+  
+  // 3. Make the main container visible (it's still transparent at this point)
+  $blurBG.css('display', 'flex');
+
+  // 4. Use a tiny timeout to trigger the fade-in effect on the next browser paint cycle
+  setTimeout(() => {
+    $blurBG.css('opacity', '1');
+    $targetPage.css('opacity', '1');
+  }, 10); // A small delay is enough
+};
 
 function zeroAM(data, mode){
   var date = new Date(data);
@@ -317,18 +453,28 @@ function animateGauge() {
   requestAnimationFrame(animateGauge);
 }
 
+function handleGestures(e) {
+  if(e.axis == 'y'){
+    let newAmplitude = waveAmplitude + e.distance * 0.01;
+    waveAmplitude = Math.max(Math.min(newAmplitude, 30), 15)
+  }else if(e.axis == 'x'){
+    let newSpeed = waveSpeed + (e.distance * 0.000005);
+    waveSpeed = Math.max(Math.min(newSpeed, 0.1), 0.025)
+  };
+}
+
 // GLOBAL VARS
 
 const isMobile = /Mobi/.test(navigator.userAgent);
 var current_page = "app"; // app | settings
 
 // Wave animation variables
-var ctx, canvas
+var ctx, canvas, gestureTracker;
 
 let waveOffset = 0;
-const waveAmplitude = 20;
-const waveLength = 800;
-const waveSpeed = 0.03;
+var waveAmplitude = 20;
+var waveLength = 800;
+var waveSpeed = 0.055;
 
 // Water variables
 var ml, pastML, targetMl
@@ -340,6 +486,8 @@ $(document).ready(function(){
   // rectangular waterGauge in .waterGauge using canvas 2d
   canvas = document.getElementById('waterGauge');
   ctx = canvas.getContext('2d');
+
+  gestureTracker = new SlideTracker(canvas, handleGestures);
 
   // Water level variables
   ml = water_read(); // initial ml value
@@ -357,5 +505,13 @@ $(document).ready(function(){
     const val = parseInt($(this).find('.fast_item_value').text().split('ml')[0]);
     addMl(val);
     saveItem("waterlevel", ml);
+  });
+
+  $('.parameters').on('click', function(){
+    showBlurPage('parameters_page');
+  });
+
+  $('.blurBG').on('click', function(){
+    showBlurPage('hide');
   });
 })
