@@ -1,2 +1,2 @@
-# WaterTracker
-WaterTracker application
+# BetterPNL
+Progressive Wep App Binance Better PNL
