@@ -229,6 +229,8 @@ body{
     overflow:auto;
     scroll-snap-type:x mandatory;
     -ms-overflow-style:none; scrollbar-width:none;
+
+    overscroll-behavior-y: none;;
 }
 
 .fast_item {

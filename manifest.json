@@ -15,5 +15,23 @@
       "sizes": "500x500",
       "purpose": "any"
     }
+  ],
+  "screenshots" : [
+    {
+      "src": "/WaterTracker/resources/imgs/smallSS.png",
+      "sizes": "430x870",
+      "type": "image/png",
+      "label": "Homescreen",
+      "purpose": "any"
+    },
+    {
+      "src": "/WaterTracker/resources/imgs/wideSS.png",
+      "sizes": "1905x962",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Homescreen",
+      "purpose": "any"
+    }
   ]
+
 }
