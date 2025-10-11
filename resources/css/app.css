@@ -84,26 +84,6 @@ body{
     display: none;
 }
 
-.app_wrapper{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    gap: 20px;
-
-    position: absolute;
-
-    width: calc(100%);
-    height: 100%;
-
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-}
-
-.app_wrapper::-webkit-scrollbar{
-    display: none;
-}
-
 .header{
     position: relative;
 
