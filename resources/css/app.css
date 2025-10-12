@@ -153,10 +153,10 @@ body{
 }
 
 #waterGauge {
-  width: 70%;
+  width: 75%;
   max-width: 300px;
 
-  height: 96%;
+  height: 100%;
   background-color: #f0f0f0;
   border-radius: 25px;
 
@@ -287,6 +287,8 @@ body{
 }
 
 .parameters_section{
+    position: relative;
+
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -338,6 +340,29 @@ body{
     color: #0f172a;
     border: 1px solid #cde1ff;
     box-shadow: none;
+}
+
+.mlPlaceholder{
+    position: absolute;
+    
+    background: linear-gradient(to right, var(--c-start), var(--c-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.mlPlaceholder.objQuot{
+    top: 55px;
+    right: 27px;
+}
+
+.mlPlaceholder.MSqty{
+    z-index: 999;
+    top: 33px;
+    right: 13px;
 }
 
 input[type="number"], input[type="time"], input[type="text"], select {

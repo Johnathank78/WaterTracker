@@ -125,7 +125,13 @@ jQuery.fn.val = function(){
 // UTILITY 
 function showBlurPage(className) {
   if(className == 'hide') {
-    $(".blurBG").css({ opacity: 0, display: 'none'})
+    // 4. Use a tiny timeout to trigger the fade-in effect on the next browser paint cycle
+    $(".blurBG").css('opacity', '0');
+    
+    setTimeout(() => {
+      $(".blurBG").css('display', 'none');
+    }, 200);
+    
     return;
   };
 
@@ -216,6 +222,40 @@ function water_read(){
 function water_save(val){
   saveItem("waterlevel", val);
   return;
+};
+
+function parameters_read(){
+
+    let data = localStorage.getItem("parameters");
+    if(data == "" || data === null){
+        data = {
+            "language": "french",
+            "goal": 2000,
+            "profiles": [
+              {"skin" : "😮", "label": "Gorgée", "value": 100},
+              {"skin" : "🥛", "label": "Verre", "value": 250},
+              {"skin" : "☕️", "label": "Tasse", "value": 300},
+              {"skin" : "🧴", "label": "Bouteille", "value": 800},
+              {"skin" : "🍺", "label": "Pinte", "value": 1500}
+            ],
+            "recall": [
+              {"qty": 500, "before": 570},
+              {"qty": 1000, "before": 720},
+              {"qty": 1500, "before": 930},
+              {"qty": 2000, "before": 1080}
+            ]
+        }
+        
+        parameters_save(data);
+    }else{
+        data = JSON.parse(data);
+    };
+
+    return data;
+};
+function parameters_save(data){
+    localStorage.setItem("parameters", JSON.stringify(data));
+    return;
 };
 
 // GAUGE
@@ -476,6 +516,8 @@ var waveAmplitude = 20;
 var waveLength = 800;
 var waveSpeed = 0.055;
 
+var params;
+
 // Water variables
 var ml, pastML, targetMl
 var animating = false;
@@ -490,9 +532,10 @@ $(document).ready(function(){
   gestureTracker = new SlideTracker(canvas, handleGestures);
 
   // Water level variables
+  params = parameters_read();
   ml = water_read(); // initial ml value
   pastML = ml;
-  targetMl = 4000; // target ml value
+  targetMl = params.goal; // target ml value
 
   // Initial resize and start animation
   resizeCanvas();
@@ -512,6 +555,18 @@ $(document).ready(function(){
   });
 
   $('.blurBG').on('click', function(e){
-    if($(e.target).is($(this))) showBlurPage('hide');;
+    if($(e.target).is($(this))) showBlurPage('hide');
+  });
+
+  $('.closeParams').on('click', function(){
+    showBlurPage('hide');
+  })
+
+  $('.save_ml').on('click', function(){
+    targetMl = parseInt($('#goalInput').val());
+    params.goal = targetMl;
+    
+    parameters_save(params);
+    showBlurPage('hide');
   });
 })

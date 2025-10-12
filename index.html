@@ -103,9 +103,10 @@
             <div class="parameters_page">
                 <span class="parameter_pageText">Parametres</span>
                 <div class="parameters_section">
-                    <span class="parameters_sectionText">Objectif Quotidien (ml)</span>
+                    <span class="parameters_sectionText">Objectif Quotidien</span>
                     <input id="goalInput" type="number" min="200" step="50" value="2000">
-                    <button class="parameters_btn validate">Enregistrer</button>
+                    <span class="mlPlaceholder objQuot">ml</span>
+                    <button class="parameters_btn validate save_ml">Enregistrer</button>
                 </div>
                 
                 <div class="parameters_section">
@@ -113,7 +114,8 @@
                     <div class="parameters_recallBody"></div>
                     <div class="reminder-grid add wrap">
                         <div class="parameters_recall_gridSection" style="grid-area: 1 / 1 / 2 / 2;">
-                            <label class="recall_label" for="newReminderAmount">Quantité (ml)</label>
+                            <label class="recall_label" for="newReminderAmount">Quantité</label>
+                            <span class="mlPlaceholder MSqty">ml</span>
                             <input id="newReminderAmount" type="number" min="100" step="50" value="500">
                         </div>
                         <div class="parameters_recall_gridSection" style="grid-area: 1 / 2 / 2 / 3;">
@@ -131,12 +133,12 @@
                     <span class="parameters_sectionText">Profiles Rapides</span>
                     <button class="parameters_btn danger">Supprimer</button>
                 </div>
-                <button class="parameters_btn danger">Fermer</button>
+                <button class="parameters_btn danger closeParams">Fermer</button>
             </div>
         </div>
 
         <div class="header">
-            <span class="versionNB">v1.8</span>
+            <span class="versionNB">v1.9</span>
             <img src="./resources/imgs/watertracker.png" alt="" class="header_logo">
             <div class="parameters">
                 <img src="./resources/imgs/parameters.svg" alt="" class="parameters_img">
