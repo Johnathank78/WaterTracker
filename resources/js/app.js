@@ -511,7 +511,7 @@ $(document).ready(function(){
     showBlurPage('parameters_page');
   });
 
-  $('.blurBG').on('click', function(){
-    showBlurPage('hide');
+  $('.blurBG').on('click', function(e){
+    if($(e.target).is($(this))) showBlurPage('hide');;
   });
 })
