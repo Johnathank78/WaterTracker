@@ -101,37 +101,39 @@
 
         <div class="blurBG">
             <div class="parameters_page">
-                <span class="parameter_pageText">Parametres</span>
-                <div class="parameters_section">
-                    <span class="parameters_sectionText">Objectif Quotidien</span>
-                    <input id="goalInput" type="number" min="200" step="50" value="2000">
-                    <span class="mlPlaceholder objQuot">ml</span>
-                    <button class="parameters_btn validate save_ml">Enregistrer</button>
-                </div>
-                
-                <div class="parameters_section">
-                    <span class="parameters_sectionText">Paliers</span>
-                    <div class="parameters_recallBody"></div>
-                    <div class="reminder-grid add wrap">
-                        <div class="parameters_recall_gridSection" style="grid-area: 1 / 1 / 2 / 2;">
-                            <label class="recall_label" for="newReminderAmount">Quantité</label>
-                            <span class="mlPlaceholder MSqty">ml</span>
-                            <input id="newReminderAmount" type="number" min="100" step="50" value="500">
-                        </div>
-                        <div class="parameters_recall_gridSection" style="grid-area: 1 / 2 / 2 / 3;">
-                            <label class="recall_label" for="newReminderTime">Avant l'heure</label>
-                            <input id="newReminderTime" type="time" value="09:00">
-                        </div>
-                        <div class="actions" style="grid-area: 2 / 1 / 3 / 3; gap: 5px;">
-                            <button id="addReminderBtn" class="parameters_btn validate">Ajouter</button>
-                            <button id="enableNotifBtn" class="parameters_btn outline">Activer notifications</button>
+                <span class="parameters_pageText">Parametres</span>
+                <div class="parameters_masterContainer">
+                    <div class="parameters_section">
+                        <span class="parameters_sectionText">Objectif Quotidien</span>
+                        <input id="goalInput" type="number" min="200" step="50" value="2000">
+                        <span class="mlPlaceholder objQuot">ml</span>
+                        <button class="parameters_btn validate save_ml">Enregistrer</button>
+                    </div>
+                    
+                    <div class="parameters_section">
+                        <span class="parameters_sectionText">Paliers</span>
+                        <div class="parameters_recallBody"></div>
+                        <div class="reminder-grid add wrap">
+                            <div class="parameters_recall_gridSection" style="grid-area: 1 / 1 / 2 / 2;">
+                                <label class="recall_label" for="newReminderAmount">Quantité</label>
+                                <span class="mlPlaceholder MSqty">ml</span>
+                                <input id="newReminderAmount" type="number" min="100" step="50" value="500">
+                            </div>
+                            <div class="parameters_recall_gridSection" style="grid-area: 1 / 2 / 2 / 3;">
+                                <label class="recall_label" for="newReminderTime">Avant l'heure</label>
+                                <input id="newReminderTime" type="time" value="09:00">
+                            </div>
+                            <div class="actions" style="grid-area: 2 / 1 / 3 / 3; gap: 5px;">
+                                <button id="addReminderBtn" class="parameters_btn validate">Ajouter</button>
+                                <button id="enableNotifBtn" class="parameters_btn outline">Activer notifications</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="parameters_section">
-                    <span class="parameters_sectionText">Profiles Rapides</span>
-                    <button class="parameters_btn danger">Supprimer</button>
+    
+                    <div class="parameters_section">
+                        <span class="parameters_sectionText">Profiles Rapides</span>
+                        <button class="parameters_btn danger">Supprimer</button>
+                    </div>
                 </div>
                 <button class="parameters_btn danger closeParams">Fermer</button>
             </div>
