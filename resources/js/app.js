@@ -122,6 +122,26 @@ jQuery.fn.val = function(){
   return result;
 };
 
+// GLOBAL VARS
+
+const isMobile = /Mobi/.test(navigator.userAgent);
+var current_page = "app"; // app | settings
+
+// Wave animation variables
+var ctx, canvas, gestureTracker;
+
+let waveOffset = 0;
+var waveAmplitude = 20;
+var waveLength = 800;
+var waveSpeed = 0.055;
+
+var params, waterhistory;
+
+// Water variables
+var ml, pastML, targetMl
+var animating = false;
+$('img').attr('draggable', false);
+
 // UTILITY 
 function showBlurPage(className) {
   if(className == 'hide') {
@@ -195,23 +215,108 @@ function formatDate(timestamp) {
   return [year, month, day].join('/');
 };
 
-function saveItem(name, data){
-  localStorage.setItem(name, data);
-  return;
+function formatTime(time, mode='string'){
+  let hour = Math.floor(time / 60);
+  let min = time - (hour * 60);
+
+  if(mode == "string"){
+    if(min.toString().length == 1){
+      min = "0" + min
+    };
+
+    return hour + "h" + min;
+  }else if(mode == "number"){
+    return {
+      hours : hour,
+      minutes : min,
+    }
+  }
+
+}
+
+function getHoursMinutes(date, mode='split'){
+  if(mode == "uni"){
+    return date.getHours() * 60 + date.getMinutes()
+  }else if(mode == "split"){
+    return {
+      hours : date.getHours(),
+      minutes: date.getMinutes()
+    }
+  }
+}
+
+function setHoursMinutes(date, hours, minutes){
+  date.setHours(hours);
+  date.setMinutes(minutes);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+
+  return date;
 };
 
+function isNaI(input) {
+  if (typeof input === 'number') {
+      input = input.toString();
+  } else if (typeof input !== 'string') {
+      return true;
+  }
+  return !/^-?\d+$/.test(input);
+};
+
+function smallestAvailableId(data, idKey){
+
+  let idList = [0];
+
+  for(let i=0; i<data.length; i++){
+    idList.push(parseInt(data[i][idKey]));
+  };
+
+  
+  let max = Math.max(...idList.filter(id => !isNaI(id)));
+  
+  for(let i=1; i<max; i++){
+    if(!idList.includes(i)){
+      return i.toString();
+    };
+  };
+
+  return (max + 1).toString();
+};
+
+function getItemIndexByID(item, id){
+  for(let i=0; i<item.length; i++){
+      if(item[i].id == id){
+          return i;
+      };
+  };
+
+  return false;
+};
+
+function removeItem(arr, index) {
+  return arr.slice(0, index).concat(arr.slice(index + 1));
+}
+
 // SAVE AND LOAD
+
+function saveItem(name, data){
+  localStorage.setItem(name, JSON.stringify(data));
+  return;
+};
 
 function water_read(){
   let level = localStorage.getItem("waterlevel");
   let today = localStorage.getItem("watertoday");
 
   if(level === null || level == ""){
-    saveItem("watertoday", getToday("date"));
+    saveItem("watertoday", getToday("timestamp"));
     return 0;
   }else{
-    if(formatDate(new Date(today)) != formatDate(getToday("date"))){
-      saveItem("watertoday", getToday("date"));
+    if(today != zeroAM(getToday('timestamp'), 'timestamp')){
+      saveItem("watertoday", getToday("timestamp"));
+      saveItem("waterhistory", []);
+      saveItem("waterlevel", 0);
+
       return 0;
     }else{
       return parseInt(level);
@@ -219,44 +324,49 @@ function water_read(){
   };
 };
 
-function water_save(val){
-  saveItem("waterlevel", val);
-  return;
-};
-
 function parameters_read(){
-
     let data = localStorage.getItem("parameters");
     if(data == "" || data === null){
         data = {
             "language": "french",
             "goal": 2000,
             "profiles": [
-              {"skin" : "😮", "label": "Gorgée", "value": 100},
-              {"skin" : "🥛", "label": "Verre", "value": 250},
-              {"skin" : "☕️", "label": "Tasse", "value": 300},
-              {"skin" : "🧴", "label": "Bouteille", "value": 800},
-              {"skin" : "🍺", "label": "Pinte", "value": 1500}
+              {"id": 1, "skin" : "😮", "label": "Gorgée", "value": 100},
+              {"id": 2, "skin" : "🥛", "label": "Verre", "value": 250},
+              {"id": 3, "skin" : "☕️", "label": "Tasse", "value": 300},
+              {"id": 4, "skin" : "🧴", "label": "Bouteille", "value": 800},
+              {"id": 5, "skin" : "🍺", "label": "Pinte", "value": 1500}
             ],
             "recall": [
-              {"qty": 500, "before": 570},
-              {"qty": 1000, "before": 720},
-              {"qty": 1500, "before": 930},
-              {"qty": 2000, "before": 1080}
+              {"id": 1, "qty": 500, "before": 570},
+              {"id": 2, "qty": 1000, "before": 720},
+              {"id": 3, "qty": 1500, "before": 930},
+              {"id": 4, "qty": 2000, "before": 1080}
             ]
         }
         
-        parameters_save(data);
+        saveItem('parameters', data);
     }else{
         data = JSON.parse(data);
+
+        $('#goalInput').val(data.goal);
     };
 
     return data;
 };
-function parameters_save(data){
-    localStorage.setItem("parameters", JSON.stringify(data));
-    return;
-};
+
+function waterhistory_read(){
+  let data = localStorage.getItem("waterhistory");
+
+  if(data == "" || data === null){
+      data = [];
+      saveItem("waterhistory", data);
+  }else{
+      data = JSON.parse(data);
+  };
+
+  return data;
+}
 
 // GAUGE
 
@@ -503,25 +613,71 @@ function handleGestures(e) {
   };
 }
 
-// GLOBAL VARS
+// OTHER
 
-const isMobile = /Mobi/.test(navigator.userAgent);
-var current_page = "app"; // app | settings
+function checkPaliers(items){
+  if(items.length == 0) return;
 
-// Wave animation variables
-var ctx, canvas, gestureTracker;
+  let output = [];
+  let now = getHoursMinutes(new Date(), 'uni');
 
-let waveOffset = 0;
-var waveAmplitude = 20;
-var waveLength = 800;
-var waveSpeed = 0.055;
+  for (const item of items) {
+    if(item.before < now){
+      output.push(item);
+    };
+  };
 
-var params;
+  return output[output.length -1];
+};
 
-// Water variables
-var ml, pastML, targetMl
-var animating = false;
-$('img').attr('draggable', false); 
+function loadFastItems(items) {
+  let $fast_container = $('.fast_container')
+  let $fast_item = $(`<div class="fast_item noselect">
+                      <span class="fast_item_emoji">😮</span>
+                      <span class="fast_item_label">Gorgée</span>
+                      <span class="fast_item_value">100ml</span>
+                    </div>`);
+
+  for (const item of items) {
+    let $curr_item = $fast_item.clone();
+
+    $curr_item.data('id', item.id);
+    $curr_item.find('.fast_item_emoji').text(item.skin);
+    $curr_item.find('.fast_item_label').text(item.label);
+    $curr_item.find('.fast_item_value').text(item.value + "ml");
+
+    $fast_container.append($curr_item);
+  }
+} 
+
+function loadRecallItems(items) {
+  let $recallContainer = $('.parameters_recallBody');
+  let $recallItem = $(`<div class="recallItemWrapper">
+                          <span class="recallItem">
+                              <span class="recallItem_val">500ml</span>
+                              <span class="recallItem_interText"> avant </span> 
+                              <span class="recallItem_time">9h00</span>
+                          </span>
+                          <div class="recallItem_bin">🗑</div>
+                        </div>`);  
+
+  $recallContainer.children().remove();
+
+  if(items.length == 0){
+    let $item = $("<span class='muted'>Aucun palier à ce jour</span>");
+    $recallContainer.append($item);
+  }else{
+    for (const item of items) {
+      let $item = $recallItem.clone();
+
+      $item.data('id', item.id);
+      $item.find('.recallItem_val').text(item.qty + "ml");
+      $item.find('.recallItem_time').text(formatTime(item.before));
+
+      $recallContainer.append($item);
+    }
+  };
+}
 
 // ON LOAD
 $(document).ready(function(){
@@ -534,6 +690,8 @@ $(document).ready(function(){
   // Water level variables
   params = parameters_read();
   ml = water_read(); // initial ml value
+  waterhistory = waterhistory_read();
+
   pastML = ml;
   targetMl = params.goal; // target ml value
 
@@ -544,9 +702,23 @@ $(document).ready(function(){
   // Resize the canvas when the window is resized
   window.addEventListener('resize', resizeCanvas);
 
-  $('.fast_item').on('click', function(){
+  $(document).on('click', '.recallItem_bin', function(){
+    let $item = $(this).closest('.recallItemWrapper')
+    let id = $item.data('id');
+    let index = getItemIndexByID(params.recall, id);
+    
+    params.recall = removeItem(params.recall, index);
+    
+    loadRecallItems(params.recall);
+    saveItem('parameters', params);
+  });
+
+  $(document).on('click', '.fast_item', function(){
     const val = parseInt($(this).find('.fast_item_value').text().split('ml')[0]);
     addMl(val);
+
+    waterhistory.push({"id": $(this).data('id'), 'val': val, 'time': Date.now()})
+    saveItem('waterhistory', waterhistory);
     saveItem("waterlevel", ml);
   });
 
@@ -566,7 +738,52 @@ $(document).ready(function(){
     targetMl = parseInt($('#goalInput').val());
     params.goal = targetMl;
     
-    parameters_save(params);
+    saveItem('parameters', params);
     showBlurPage('hide');
   });
+
+  $('.rollBack').on('click', function(){
+    if(waterhistory.length == 0) return;
+    let lastHistoryItem = waterhistory[waterhistory.length - 1];
+
+    addMl(-1 * lastHistoryItem.val);
+    waterhistory = waterhistory.slice(0, waterhistory.length - 1)
+
+    saveItem('waterhistory', waterhistory);
+    saveItem('waterlevel', ml);
+  });
+
+  $('#addReminderBtn').on('click', function(){
+    let mlVal = $('#newReminderAmount').val();
+    let time = $('#newReminderTime').val();
+
+    let hour = parseInt(time.split(':')[0]) * 60
+    let min = parseInt(time.split(':')[1])
+
+    let sum = hour + min;
+
+    let recallItem = {
+      'id': smallestAvailableId(params.recall, 'id'),
+      'qty': parseInt(mlVal),
+      'before': sum
+    }
+
+    params.recall.push(recallItem);
+
+    params.recall.sort((a, b) => {
+      return a.before - b.before;
+    });
+
+    loadRecallItems(params.recall);
+    saveItem('parameters', params);
+  });
+
+  $('#enableNotifBtn').on('click', function(){
+    $(this).remove();
+  });
+
+  loadFastItems(params.profiles);
+  loadRecallItems(params.recall);
+
+  checkPaliers(params.recall);
 })
