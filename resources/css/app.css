@@ -187,21 +187,42 @@ body{
     font-size:12px; color:var(--muted); margin:0 2px 4px
 }
 
+.muted{
+    font-size: 13px;
+    opacity: .7;
+    color: var(--muted);
+    text-align: left;
+}
+
+.fastMaster_container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+    width: 100%;
+
+    -ms-overflow-style:none; 
+    scrollbar-width:none;
+}
+
 .fast_container {
+    flex-shrink: 1;
+
     display: flex;
     flex-direction: row;
     align-items: center;
 
-    width: 100%;
-
     gap: 10px;
+    border-radius: 12px;
 
     overflow:auto;
     scroll-snap-type:x mandatory;
     -ms-overflow-style:none; 
     scrollbar-width:none;
 
-    overscroll-behavior-y: none;;
+    overscroll-behavior-y: none;
 }
 
 .fast_item {
@@ -235,6 +256,21 @@ body{
     font-size: 15px;
     font-weight: bold;
     color: var(--c-end);
+}
+
+.rollBack{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 44px;
+    width: 44px;
+    color: white;
+
+    border-radius: 12px;
+
+    background: linear-gradient(135deg, #ff6b6b, #ef4444);
+    box-shadow: 0 6px 18px rgba(239, 68, 68, .25);
 }
 
 .blurBG{
@@ -273,6 +309,7 @@ body{
 
     max-height: calc(85% - 40px);
     width: calc(80% - 40px);
+    max-width: 80vw;
     background-color: white;
     border-radius: 18px;
 
@@ -296,12 +333,14 @@ body{
     gap: 10px;
     padding: 15px;
     border-radius: 15px;
+    background-color: white;
 
     -webkit-box-shadow: 0px 0px 10px 5px var(--shadow);
     box-shadow: 0px 0px 10px 5px var(--shadow);
 }
 
 .parameter_pageText{
+    position: sticky;
     align-self: flex-start;
     font-size: 20px;
     font-weight: 800;
@@ -378,6 +417,53 @@ input[type="number"], input[type="time"], input[type="text"], select {
     transition: box-shadow .2s, border-color .2s;
 }
 
+.parameters_recallBody{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    width: 100%;
+}
+
+.recallItemWrapper{
+    display: flex;
+    flex-direction: row;
+
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid #e5efff;
+    font-size: 12px;
+    color: var(--text);
+    background: #fff;
+    outline: none;
+    transition: box-shadow .2s, border-color .2s;
+}
+
+.recallItem{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    height: 15px;
+    width: calc(100% - 24px - 2px);
+    justify-content: space-between;
+}
+
+.recallItem_interText{
+    font-size: 12px;
+}
+
+.recallItem_val{
+    font-size: 14px;
+}
+
+.recallItem_time{
+    font-size: 14px;
+}
+
 .recall_label{
     font-size: 13px;
 }
@@ -392,6 +478,8 @@ input[type="number"], input[type="time"], input[type="text"], select {
 
 .reminder-grid.add {
     display: grid;
+
+    width: 100%;
 
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, 1fr);
