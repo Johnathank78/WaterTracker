@@ -119,8 +119,8 @@ body{
     top: 30px;
     right: 20px;    
 
-    width: 30px;
-    height: 30px;
+    width: 33px;
+    height: 33px;
 
     border-radius: 8px;
     background: linear-gradient(135deg, var(--c-start), var(--c-end));
@@ -129,6 +129,30 @@ body{
 }
 
 .parameters_img{
+    width: 50%;
+}
+
+/* Statistics button mirrors parameters, positioned symmetrically on the left */
+.statistics{
+    position: absolute;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    top: 30px;
+    left: 20px;
+
+    width: 33px;
+    height: 33px;
+
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--c-start), var(--c-end));
+
+    cursor: pointer;
+}
+
+.statistics_img{
     width: 50%;
 }
 
@@ -245,6 +269,7 @@ body{
     border-radius:12px;
     cursor:pointer; 
     white-space:nowrap;
+    will-change: transform;
 }
 
 .fast_item_emoji {
@@ -301,14 +326,23 @@ body{
     display: none;
     opacity: 0;
     /* Add a transition for the fade effect */
-    transition: opacity 0.15s ease-in-out;
+        transition: opacity 0.2s ease-out;
+        will-change: opacity;
 }
 
 .blurBG > * {
-  display: none;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.22s ease-out;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate3d(-50%, -50%, 0);
+    will-change: opacity, transform;
+    backface-visibility: hidden;
 }
 
-.parameters_pageText{
+.panel_pageText{
     align-self: flex-start;
     line-height: 35px;
     font-weight: 800;
@@ -354,7 +388,26 @@ body{
     box-shadow: 0px 0px 10px 5px var(--shadow);
 }
 
-.parameters_masterContainer{
+/* Stats page styled like parameters/fast profiles */
+.stats_page{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 15px;
+    padding: 20px 0;
+
+    max-height: calc(85% - 10px);
+    width: 100%;
+    max-width: 80vw;
+    background-color: white;
+    border-radius: 18px;
+
+    -webkit-box-shadow: 0px 0px 10px 5px var(--shadow);
+    box-shadow: 0px 0px 10px 5px var(--shadow);
+}
+
+.panel_masterContainer{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -393,7 +446,7 @@ body{
     display: none;
 }
 
-.parameters_section{
+.panel_section{
     position: relative;
 
     display: flex;
@@ -449,7 +502,7 @@ body{
 }
 
 .profile_value{
-    width: 100px !important;
+    width: 60px !important;
 }
 
 .profileItem_bin {
@@ -496,12 +549,12 @@ body{
     color: var(--text);
 }
 
-.parameters_sectionText{
+.panel_sectionText{
     font-size: 14px;
     color: var(--text);
 }
 
-.parameters_btn{
+.panel_btn{
     width: 100%;
     border: 0;
     border-radius: 10px;
@@ -513,21 +566,21 @@ body{
     transition: transform .08s ease, opacity .15s;
 }
 
-.closeParams{
+.closeParams, .closeStats{
     width: 90% !important;
 }
 
-.parameters_btn.validate{
+.panel_btn.validate{
     background: linear-gradient(135deg, var(--c-start), var(--c-end));;
     box-shadow: 0 6px 18px rgba(12, 112, 255, .25);
 }
 
-.parameters_btn.danger{
+.panel_btn.danger{
     background: linear-gradient(135deg, #ff6b6b, #ef4444);
     box-shadow: 0 6px 18px rgba(239, 68, 68, .25);
 }
 
-.parameters_btn.outline{
+.panel_btn.outline{
     background: #fff;
     color: #0f172a;
     border: 1px solid #cde1ff;
@@ -638,6 +691,12 @@ input[type="number"], input[type="time"], input[type="text"], select {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     width: 100%;
+    height: 35px;
+}
+
+.history_footer > .panel_btn{
+    padding: 6px 0;
+    font-size: 11.5px;
 }
 
 .recallItemWrapper{
@@ -729,8 +788,9 @@ input[type="number"], input[type="time"], input[type="text"], select {
 
 /* Keep the two input sections side-by-side on the first row */
 .reminder-grid.add.wrap .parameters_recall_gridSection {
-    flex: 1 1 calc(50% - 3px);
-    min-width: 140px; /* keeps inputs usable while allowing two-up on small screens */
+    /* Force both inputs to stay on the same row */
+    flex: 0 0 calc(50% - 3px);
+    min-width: 0; /* allow shrinking instead of wrapping */
 }
 
 /* Make the actions row span the full width below the inputs */
@@ -757,14 +817,14 @@ input[type="number"], input[type="time"], input[type="text"], select {
 
 .versionNB{
     position: absolute;
-    top: 30px;
-    left: 20px;
+    top: 25px;
+    right: 20px;
 
     background: linear-gradient(to right, var(--c-start), var(--c-end));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
 
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 800;
 }

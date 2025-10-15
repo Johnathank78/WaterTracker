@@ -101,71 +101,93 @@
 
         <div class="blurBG">
             <div class="parameters_page">
-                <span class="parameters_pageText">Parametres</span>
-                <div class="parameters_masterContainer">
-                    <div class="parameters_section">
-                        <span class="parameters_sectionText">Objectif Quotidien</span>
+                <span class="versionNB">v2.1</span>
+                <span class="panel_pageText">Parametres</span>
+                <div class="panel_masterContainer">
+                    <div class="panel_section">
+                        <span class="panel_sectionText">Objectif Quotidien</span>
                         <input id="goalInput" type="number" min="200" step="50" value="2000">
                         <span class="mlPlaceholder objQuot">ml</span>
-                        <button class="parameters_btn validate save_ml">Enregistrer</button>
+                        <button class="panel_btn validate save_ml">Enregistrer</button>
                     </div>
                     
-                    <div class="parameters_section">
-                        <span class="parameters_sectionText">Paliers</span>
+                    <div class="panel_section">
+                        <span class="panel_sectionText">Paliers</span>
                         <div class="parameters_recallBody"></div>
                         <div class="reminder-grid add wrap">
                             <div class="parameters_recall_gridSection" style="grid-area: 1 / 1 / 2 / 2;">
                                 <label class="recall_label" for="newReminderAmount">Quantité</label>
                                 <span class="mlPlaceholder MSqty">ml</span>
-                                <input id="newReminderAmount" type="number" min="100" step="50" value="500">
+                                <input id="newReminderAmount" type="text" inputmode="numeric" pattern="[0-9]*" value="500">
                             </div>
                             <div class="parameters_recall_gridSection" style="grid-area: 1 / 2 / 2 / 3;">
                                 <label class="recall_label" for="newReminderTime">Avant l'heure</label>
                                 <input id="newReminderTime" type="time" value="09:00">
                             </div>
                             <div class="actions" style="grid-area: 2 / 1 / 3 / 3; gap: 5px;">
-                                <button id="addReminderBtn" class="parameters_btn validate">Ajouter</button>
-                                <button id="enableNotifBtn" class="parameters_btn outline">Activer notifications</button>
+                                <button id="addReminderBtn" class="panel_btn validate">Ajouter</button>
+                                <button id="enableNotifBtn" class="panel_btn outline">Activer notifications</button>
                             </div>
                         </div>
                     </div>
     
-                    <div class="parameters_section">
-                        <span class="parameters_sectionText">Profiles Rapides</span>
-                        <button class="parameters_btn editProfiles validate">Editer</button>
+                    <div class="panel_section">
+                        <span class="panel_sectionText">Profiles Rapides</span>
+                        <button class="panel_btn editProfiles validate">Editer</button>
                     </div>
 
-                    <div class="parameters_section">
-                        <span class="parameters_sectionText">Historique</span>
+                    <div class="panel_section">
+                        <span class="panel_sectionText">Historique</span>
                         <div class="parameters_historyBody">
                             <!-- Filled dynamically -->
                         </div>
                         <div class="history_footer">
-                            <button class="parameters_btn outline history_undo_last">Annuler le dernier</button>
-                            <button class="parameters_btn danger history_undo_all">Tout annuler</button>
+                            <button class="panel_btn outline history_undo_last">Annuler le dernier</button>
+                            <button class="panel_btn danger history_undo_all">Tout annuler</button>
                         </div>
                     </div>
                 </div>
-                <button class="parameters_btn danger closeParams">Fermer</button>
+                <button class="panel_btn danger closeParams">Fermer</button>
             </div>
 
             <div class="fastProfile_page">
-                <span class="parameters_pageText">Profils Rapides</span>
+                <span class="panel_pageText">Profils Rapides</span>
                 <div class="fastProfiles_masterContainer">
                     <div class="fastProfiles_container"></div>
                     <div class="fastProfile_actions">
-                        <button class="parameters_btn validate addProfileBtn">Ajouter un profil</button>
-                        <button class="parameters_btn outline closeFastProfiles">Valider</button>
+                        <button class="panel_btn validate addProfileBtn">Ajouter un profil</button>
+                        <button class="panel_btn outline closeFastProfiles">Valider</button>
                     </div>
                 </div>
+            </div>
+
+            <div class="stats_page">
+                <span class="panel_pageText">Statistiques</span>
+                <div class="panel_masterContainer">
+                    <div class="panel_section">
+                        <span class="panel_sectionText">Total bu</span>
+                        <span id="stats_totalMl" class="muted">0 ml</span>
+                    </div>
+                    <div class="panel_section">
+                        <span class="panel_sectionText">Dette d'eau</span>
+                        <span id="stats_debtMl" class="muted">0 ml</span>
+                    </div>
+                    <div class="panel_section">
+                        <span class="panel_sectionText">Date d'arrivée</span>
+                        <span id="stats_installDate" class="muted">—</span>
+                    </div>
+                </div>
+                <button class="panel_btn danger closeStats">Fermer</button>
             </div>
         </div>
 
         <div class="header">
-            <span class="versionNB">v2.0</span>
             <img src="./resources/imgs/watertracker.png" alt="" class="header_logo">
             <div class="parameters">
                 <img src="./resources/imgs/parameters.svg" alt="" class="parameters_img">
+            </div>
+            <div class="statistics">
+                <img src="./resources/imgs/stats.svg" alt="" class="statistics_img">
             </div>
         </div>
         <div class="body">

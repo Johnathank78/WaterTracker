@@ -1,4 +1,4 @@
-const CACHE_NAME = "app-cache-v1.7";
+const CACHE_NAME = "app-cache-v2.1";
 
 self.addEventListener("install", event => {
     event.waitUntil(
@@ -13,6 +13,9 @@ self.addEventListener("install", event => {
                 "WaterTracker/resources/imgs/smallSS.png",
                 "WaterTracker/resources/imgs/wideSS.png",
                 "WaterTracker/resources/imgs/icon.png",
+                "WaterTracker/resources/imgs/stats.svg",
+                "WaterTracker/resources/imgs/bin.svg",
+                "WaterTracker/resources/imgs/parameters.svg",
                 "WaterTracker/resources/splash_screens/iPhone_17_Pro_Max__iPhone_16_Pro_Max_landscape.png",
                 "WaterTracker/resources/splash_screens/iPhone_17_Pro__iPhone_17__iPhone_16_Pro_landscape.png",
                 "WaterTracker/resources/splash_screens/iPhone_16_Plus__iPhone_15_Pro_Max__iPhone_15_Plus__iPhone_14_Pro_Max_landscape.png",

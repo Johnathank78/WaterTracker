@@ -136,6 +136,10 @@ var waveLength = 800;
 var waveSpeed = 0.055;
 
 var params, waterhistory;
+// Keep reference to the currently displayed recall notification (if any)
+var activeRecallNotification = null;
+// Stats object (persisted)
+var stats;
 
 // Water variables
 var ml, pastML, targetMl
@@ -156,24 +160,45 @@ function showBlurPage(className) {
 
   const $blurBG = $(".blurBG");
   const $targetPage = $(`.${className}`);
+  const overlayVisible = $blurBG.css('display') === 'flex' && parseFloat($blurBG.css('opacity') || '0') > 0.9;
   
-  // 1. Instantly hide any other pages that might be visible
-  $blurBG.children(':not(.' + className + ')').css('display', 'none');
+  // If overlay is already visible, crossfade between pages without hiding overlay
+  if (overlayVisible) {
+    const $current = $blurBG.children().filter(':visible').not($targetPage).first();
 
-  // 2. Prepare the target page: make it part of the layout but fully transparent
-  $targetPage.css({
-    'display': 'flex',
-    'opacity': '0'
-  });
-  
-  // 3. Make the main container visible (it's still transparent at this point)
-  $blurBG.css('display', 'flex');
+    // Show target immediately as fully opaque BEHIND current
+    // So at least one opaque panel covers the background at all times
+    $targetPage.css({ display: 'flex', opacity: 1, 'z-index': 1 });
+    if ($current.length) $current.css('z-index', 2);
 
-  // 4. Use a tiny timeout to trigger the fade-in effect on the next browser paint cycle
-  setTimeout(() => {
-    $blurBG.css('opacity', '1');
-    $targetPage.css('opacity', '1');
-  }, 10); // A small delay is enough
+    // Next frame, fade current out only (fade-through)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if ($current.length) {
+          $current.css('opacity', 0);
+          setTimeout(() => {
+            $current.css({ display: 'none', opacity: 1, 'z-index': '' });
+            $targetPage.css('z-index', '');
+          }, 240); // align with CSS (~220ms) + small buffer
+        }
+      });
+    });
+  } else {
+    // Opening from closed state: hide others instantly
+    $blurBG.children(':not(.' + className + ')').css({ display: 'none', opacity: 0 });
+
+    // Prepare target
+    $targetPage.css({ display: 'flex', opacity: 0 });
+
+    // Show overlay, then fade both overlay and target in
+    $blurBG.css('display', 'flex');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        $blurBG.css('opacity', '1');
+        $targetPage.css('opacity', '1');
+      });
+    });
+  }
 };
 
 function zeroAM(data, mode){
@@ -303,6 +328,28 @@ function saveItem(name, data){
   return;
 };
 
+// Stats read/init
+function stats_read(){
+  let data = localStorage.getItem('stats');
+  if(data === null || data === ''){
+    data = {
+      total: 0,
+      debt: 0,
+      installDate: getToday('timestamp'),
+      lastProcessedDay: getToday('timestamp')
+    };
+    saveItem('stats', data);
+  }else{
+    data = JSON.parse(data);
+    // Backfill missing fields if any
+    if(typeof data.total !== 'number') data.total = 0;
+    if(typeof data.debt !== 'number') data.debt = 0;
+    if(!data.installDate) data.installDate = getToday('timestamp');
+    if(!data.lastProcessedDay) data.lastProcessedDay = getToday('timestamp');
+  }
+  return data;
+}
+
 function water_read(){
   let level = localStorage.getItem("waterlevel");
   let today = localStorage.getItem("watertoday");
@@ -312,6 +359,23 @@ function water_read(){
     return 0;
   }else{
     if(today != zeroAM(getToday('timestamp'), 'timestamp')){
+      // Before resetting the day, update stats with yesterday's debt
+      stats = stats || stats_read();
+      params = params || parameters_read();
+
+      const prevDayTs = parseInt(today);
+      const currDayTs = zeroAM(getToday('timestamp'), 'timestamp');
+      const diffDays = Math.max(1, Math.floor((currDayTs - prevDayTs) / (24 * 60 * 60 * 1000)));
+      const consumedYesterday = parseInt(level) || 0;
+      // First day in gap accounts for consumed water; the rest assumed 0
+      let newDebt = Math.max((params.goal || 0) - consumedYesterday, 0);
+      if(diffDays > 1){
+        newDebt += (diffDays - 1) * (params.goal || 0);
+      }
+      stats.debt += newDebt;
+      stats.lastProcessedDay = currDayTs;
+      saveItem('stats', stats);
+
       saveItem("watertoday", getToday("timestamp"));
       saveItem("waterhistory", []);
       saveItem("waterlevel", 0);
@@ -330,11 +394,11 @@ function parameters_read(){
             "language": "french",
             "goal": 2000,
             "profiles": [
-              {"id": 1, "skin" : "😮", "label": "Gorgée", "value": 100},
-              {"id": 2, "skin" : "🥛", "label": "Verre", "value": 250},
-              {"id": 3, "skin" : "☕️", "label": "Tasse", "value": 300},
-              {"id": 4, "skin" : "🧴", "label": "Bouteille", "value": 800},
-              {"id": 5, "skin" : "🍺", "label": "Pinte", "value": 1500}
+              {"id": 1, "skin" : "😮", "label": "Gorgée", "value": 100, "count": 0},
+              {"id": 2, "skin" : "🥛", "label": "Verre", "value": 250, "count": 0},
+              {"id": 3, "skin" : "☕️", "label": "Tasse", "value": 300, "count": 0},
+              {"id": 4, "skin" : "🧴", "label": "Bouteille", "value": 800, "count": 0},
+              {"id": 5, "skin" : "🍺", "label": "Pinte", "value": 1500, "count": 0}
             ],
             "recall": [
               {"id": 1, "qty": 500, "before": 570},
@@ -347,6 +411,18 @@ function parameters_read(){
         saveItem('parameters', data);
     }else{
         data = JSON.parse(data);
+
+        // Ensure profiles have a "count" field (migration for older saves)
+        if (Array.isArray(data.profiles)) {
+          data.profiles = data.profiles.map(p => {
+            if (typeof p.count !== 'number' || isNaN(p.count)) {
+              p.count = 0;
+            }
+            return p;
+          });
+          // Persist migration so future loads keep the field
+          saveItem('parameters', data);
+        }
 
         $('#goalInput').val(data.goal);
     };
@@ -583,6 +659,10 @@ function addMl(mlToAdd) {
 
   ml += mlToAdd;
   animating = true;
+  // Track total consumed since install (net)
+  stats = stats || stats_read();
+  stats.total = Math.max(0, (stats.total || 0) + mlToAdd);
+  saveItem('stats', stats);
 };
 
 // Animation loop
@@ -621,43 +701,123 @@ function checkPaliers(items){
   let now = getHoursMinutes(new Date(), 'uni');
 
   for (const item of items) {
-    if(item.before < now){
+    if(item.before < now && item.qty > ml){
       output.push(item);
     };
   };
 
   let alert = output[output.length -1];
-  // service worker notification for alert
+
   if(alert !== undefined){
     if (Notification.permission === "granted") {
-      new Notification("Rappel d'hydratation", {
+      // Close any existing recall notification to avoid flooding
+      try {
+        if (activeRecallNotification && typeof activeRecallNotification.close === 'function') {
+          activeRecallNotification.close();
+        }
+      } catch (e) { /* no-op */ }
+
+      // Show a fresh one and keep a reference
+      const n = new Notification("Rappel d'hydratation", {
         body: `Vous auriez du boire ${alert.qty}ml avant ${formatTime(alert.before)}`,
-        icon: './resources/imgs/icon.png'
+        icon: './resources/imgs/icon.png',
+        tag: 'watertracker-recall', // helps some browsers replace existing notifications
+        renotify: false
       });
+      activeRecallNotification = n;
+      // Clear the reference when it closes
+      if (n && typeof n.addEventListener === 'function') {
+        n.addEventListener('close', function(){
+          if (activeRecallNotification === n) activeRecallNotification = null;
+        });
+        // Some browsers use 'click' then auto-close; also clear on click
+        n.addEventListener('click', function(){
+          try { n.close && n.close(); } catch(_) {}
+          if (activeRecallNotification === n) activeRecallNotification = null;
+        });
+      }
     };
   };
 };
 
 function loadFastItems(items) {
-  let $fast_container = $('.fast_container')
-  let $fast_item = $(`<div class="fast_item noselect">
-                      <span class="fast_item_emoji">😮</span>
-                      <span class="fast_item_label">Gorgée</span>
-                      <span class="fast_item_value">100ml</span>
-                    </div>`);
+  const $container = $('.fast_container');
+  const container = $container[0];
 
-  $fast_container.children().remove();
+  // Sort by usage count (most used first); fallback to 0 if undefined
+  const sorted = [...items].sort((a, b) => (b.count || 0) - (a.count || 0));
 
-  for (const item of items) {
-    let $curr_item = $fast_item.clone();
+  // Map existing nodes by id and record FIRST rects for FLIP
+  const existingNodes = new Map();
+  const firstRects = new Map();
+  $container.children().each(function(){
+    const id = $(this).data('id');
+    if (id !== undefined) {
+      existingNodes.set(String(id), this);
+      // Clear any previous transition to ensure correct measurements
+      this.style.transition = 'none';
+      this.style.transform = '';
+      firstRects.set(String(id), this.getBoundingClientRect());
+    }
+  });
 
-    $curr_item.data('id', item.id);
-    $curr_item.find('.fast_item_emoji').text(item.skin);
-    $curr_item.find('.fast_item_label').text(item.label);
-    $curr_item.find('.fast_item_value').text(item.value + "ml");
+  // Rebuild DOM in the new order, reusing nodes when possible
+  const present = new Map();
+  for (const item of sorted) {
+    const idStr = String(item.id);
+    let el = existingNodes.get(idStr);
+    if (!el) {
+      // Create a new node if it doesn't exist yet
+      el = document.createElement('div');
+      el.className = 'fast_item noselect';
+      el.innerHTML = '<span class="fast_item_emoji"></span>\n                      <span class="fast_item_label"></span>\n                      <span class="fast_item_value"></span>';
+      // Initial enter state
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.96)';
+      $(el).data('id', item.id);
+    }
 
-    $fast_container.append($curr_item);
+    // Update content
+    el.querySelector('.fast_item_emoji').textContent = item.skin;
+    el.querySelector('.fast_item_label').textContent = item.label;
+    el.querySelector('.fast_item_value').textContent = item.value + 'ml';
+
+    // Append in correct order (moves existing nodes as well)
+    container.appendChild(el);
+    present.set(idStr, el);
   }
+
+  // Remove nodes that are no longer present
+  existingNodes.forEach((el, id) => {
+    if (!present.has(id)) {
+      el.remove();
+    }
+  });
+
+  // Record LAST rects, then apply FLIP transforms
+  present.forEach((el, id) => {
+    const last = el.getBoundingClientRect();
+    const first = firstRects.get(id);
+
+    if (first) {
+      const dx = first.left - last.left;
+      const dy = first.top - last.top;
+      // Invert
+      el.style.transition = 'none';
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+      // Force reflow
+      void el.offsetWidth; // eslint-disable-line no-unused-expressions
+      // Play
+      el.style.transition = 'transform 420ms ease, opacity 420ms ease';
+      el.style.transform = 'translate(0, 0)';
+    } else {
+      // Enter animation
+      void el.offsetWidth;
+      el.style.transition = 'transform 360ms ease, opacity 360ms ease';
+      el.style.opacity = '1';
+      el.style.transform = 'scale(1)';
+    }
+  });
 } 
 
 function renderFastProfilesEditor(items){
@@ -764,6 +924,7 @@ $(document).ready(function(){
 
   // Water level variables
   params = parameters_read();
+  stats = stats_read();
   ml = water_read(); // initial ml value
   waterhistory = waterhistory_read();
 
@@ -795,16 +956,46 @@ $(document).ready(function(){
 
   $(document).on('click', '.fast_item', function(){
     const val = parseInt($(this).find('.fast_item_value').text().split('ml')[0]);
+    const id = $(this).data('id');
     addMl(val);
 
-    waterhistory.push({"id": $(this).data('id'), 'val': val, 'time': Date.now()})
+    waterhistory.push({"id": id, 'val': val, 'time': Date.now()})
     saveItem('waterhistory', waterhistory);
     saveItem("waterlevel", ml);
+
+    // Increment profile usage count and refresh fast items order
+    const idx = getItemIndexByID(params.profiles, id);
+    if (idx !== false) {
+      const curr = params.profiles[idx];
+      curr.count = (typeof curr.count === 'number' && !isNaN(curr.count)) ? curr.count + 1 : 1;
+      saveItem('parameters', params);
+      loadFastItems(params.profiles);
+    }
   });
 
   $('.parameters').on('click', function(){
     loadHistoryItems(waterhistory);
     showBlurPage('parameters_page');
+  });
+
+  // Stats button
+  $('.statistics').on('click', function(){
+    // Refresh displayed stats values
+    stats = stats_read();
+    const totalTxt = `${Math.max(0, Math.round(stats.total || 0))} ml`;
+    const debtTxt = `${Math.max(0, Math.round(stats.debt || 0))} ml`;
+    const installTxt = formatDate(stats.installDate || getToday('timestamp'));
+    $('#stats_totalMl').text(totalTxt);
+    $('#stats_debtMl').text(debtTxt);
+    $('#stats_installDate').text(installTxt);
+    // Version: mirror header span text if present, else keep default
+    const v = $('.versionNB').text() || 'v2.0';
+    $('#stats_version').text(v);
+    showBlurPage('stats_page');
+  });
+
+  $(document).on('click', '.closeStats', function(){
+    showBlurPage('hide');
   });
 
   $('.editProfiles').on('click', function(){
@@ -946,7 +1137,8 @@ $(document).ready(function(){
       id: smallestAvailableId(params.profiles, 'id'),
       skin: '🙂',
       label: 'Profil',
-      value: 100
+      value: 100,
+      count: 0
     };
     params.profiles.push(newProfile);
     saveItem('parameters', params);
