@@ -116,7 +116,7 @@ body{
     justify-content: center;
     align-items: center;
 
-    top: 30px;
+    top: 23px;
     right: 20px;    
 
     width: 33px;
@@ -140,7 +140,7 @@ body{
     justify-content: center;
     align-items: center;
 
-    top: 30px;
+    top: 23px;
     left: 20px;
 
     width: 33px;
@@ -680,10 +680,19 @@ input[type="number"], input[type="time"], input[type="text"], select {
     width: 100%;
 }
 .history_skin{ font-size: 16px; }
-.history_val{ 
+
+.history_val, .history_label{ 
     font-size: 14px; 
     font-weight: 700; 
 }
+
+.history_val {
+    background: linear-gradient(to right, var(--c-start), var(--c-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
 .history_time{ font-size: 13px; color: var(--muted); margin-left: auto; }
 
 .history_footer{

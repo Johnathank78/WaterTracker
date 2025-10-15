@@ -808,7 +808,7 @@ function loadFastItems(items) {
       // Force reflow
       void el.offsetWidth; // eslint-disable-line no-unused-expressions
       // Play
-      el.style.transition = 'transform 420ms ease, opacity 420ms ease';
+      el.style.transition = 'transform 700ms ease, opacity 700ms ease';
       el.style.transform = 'translate(0, 0)';
     } else {
       // Enter animation
@@ -889,6 +889,7 @@ function loadHistoryItems(items){
   const $historyItem = $(`<div class="historyItemWrapper">
                             <span class="historyItem">
                               <span class="history_skin">💧</span>
+                              <span class="history_label">Gorgée</span>
                               <span class="history_val">+100ml</span>
                               <span class="history_time">à 09:00</span>
                             </span>
@@ -908,9 +909,10 @@ function loadHistoryItems(items){
     const mm = String(date.getMinutes()).padStart(2, '0');
     const prof = (params && Array.isArray(params.profiles)) ? params.profiles.find(p => p.id == entry.id) : null;
     $item.find('.history_skin').text(prof && prof.skin ? prof.skin : '💧');
+    $item.find('.history_label').text(prof && prof.label ? prof.label : 'Gorgée');
     $item.find('.history_val').text('+' + entry.val + 'ml');
     $item.find('.history_time').text('à ' + hh + ':' + mm);
-    $historyContainer.append($item);
+    $historyContainer.prepend($item);
   }
 }
 
