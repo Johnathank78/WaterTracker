@@ -140,7 +140,6 @@ var params, waterhistory;
 // Water variables
 var ml, pastML, targetMl
 var animating = false;
-$('img').attr('draggable', false);
 
 // UTILITY 
 function showBlurPage(className) {
@@ -627,7 +626,16 @@ function checkPaliers(items){
     };
   };
 
-  return output[output.length -1];
+  let alert = output[output.length -1];
+  // service worker notification for alert
+  if(alert !== undefined){
+    if (Notification.permission === "granted") {
+      new Notification("Rappel d'hydratation", {
+        body: `Vous auriez du boire ${alert.qty}ml avant ${formatTime(alert.before)}`,
+        icon: './resources/imgs/icon.png'
+      });
+    };
+  };
 };
 
 function loadFastItems(items) {
@@ -637,6 +645,8 @@ function loadFastItems(items) {
                       <span class="fast_item_label">Gorgée</span>
                       <span class="fast_item_value">100ml</span>
                     </div>`);
+
+  $fast_container.children().remove();
 
   for (const item of items) {
     let $curr_item = $fast_item.clone();
@@ -650,6 +660,39 @@ function loadFastItems(items) {
   }
 } 
 
+function renderFastProfilesEditor(items){
+  const $container = $('.fastProfiles_container');
+  $container.children().remove();
+
+  // Template similar to recallItemWrapper with inline inputs
+  const $row = $(`
+    <div class="profileItemWrapper">
+      <div class="profileItem_inputs">
+        <input class="profile_skin" type="text" maxlength="2" value="😮" aria-label="Emoji"/>
+        <input class="profile_label" type="text" value="Gorgée" aria-label="Label"/>
+        <input class="profile_value" type="number" min="1" step="1" value="100" aria-label="Valeur (ml)"/>
+      </div>
+      <div class="profileItem_bin">
+        <img class="bin_img" src="./resources/imgs/bin.svg" alt="Supprimer le profil">
+      </div>
+    </div>`);
+
+  for(const item of items){
+    const $item = $row.clone();
+    $item.data('id', item.id);
+    $item.find('.profile_skin').val(item.skin);
+    $item.find('.profile_label').val(item.label);
+    $item.find('.profile_value').val(item.value);
+    $container.append($item);
+  }
+
+  if(params.profiles.length === 1){
+    $('.fastProfiles_container .profileItem_bin').css('display', 'none');
+  }else{
+    $('.fastProfiles_container .profileItem_bin').css('display', 'block');
+  };
+}
+
 function loadRecallItems(items) {
   let $recallContainer = $('.parameters_recallBody');
   let $recallItem = $(`<div class="recallItemWrapper">
@@ -658,7 +701,9 @@ function loadRecallItems(items) {
                               <span class="recallItem_interText"> avant </span> 
                               <span class="recallItem_time">9h00</span>
                           </span>
-                          <div class="recallItem_bin">🗑</div>
+                          <div class="recallItem_bin">
+                              <img class="bin_img offset" src="./resources/imgs/bin.svg" alt="Supprimer le palier">
+                          </div>
                         </div>`);  
 
   $recallContainer.children().remove();
@@ -677,6 +722,36 @@ function loadRecallItems(items) {
       $recallContainer.append($item);
     }
   };
+}
+
+function loadHistoryItems(items){
+  const $historyContainer = $('.parameters_historyBody');
+  const $historyItem = $(`<div class="historyItemWrapper">
+                            <span class="historyItem">
+                              <span class="history_skin">💧</span>
+                              <span class="history_val">+100ml</span>
+                              <span class="history_time">à 09:00</span>
+                            </span>
+                          </div>`);
+
+  $historyContainer.children().remove();
+
+  if(!items || items.length === 0){
+    $historyContainer.append($('<span class="muted">Aucun historique pour aujourd\'hui</span>'));
+    return;
+  }
+
+  for(const entry of items){
+    const $item = $historyItem.clone();
+    const date = new Date(entry.time);
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    const prof = (params && Array.isArray(params.profiles)) ? params.profiles.find(p => p.id == entry.id) : null;
+    $item.find('.history_skin').text(prof && prof.skin ? prof.skin : '💧');
+    $item.find('.history_val').text('+' + entry.val + 'ml');
+    $item.find('.history_time').text('à ' + hh + ':' + mm);
+    $historyContainer.append($item);
+  }
 }
 
 // ON LOAD
@@ -702,6 +777,11 @@ $(document).ready(function(){
   // Resize the canvas when the window is resized
   window.addEventListener('resize', resizeCanvas);
 
+  $('img').attr('draggable', false);
+  if (Notification.permission === "granted") {
+    $('#enableNotifBtn').remove();
+  }
+
   $(document).on('click', '.recallItem_bin', function(){
     let $item = $(this).closest('.recallItemWrapper')
     let id = $item.data('id');
@@ -723,16 +803,23 @@ $(document).ready(function(){
   });
 
   $('.parameters').on('click', function(){
+    loadHistoryItems(waterhistory);
     showBlurPage('parameters_page');
   });
 
-  $('.blurBG').on('click', function(e){
-    if($(e.target).is($(this))) showBlurPage('hide');
+  $('.editProfiles').on('click', function(){
+    renderFastProfilesEditor(params.profiles);
+    showBlurPage('fastProfile_page');
   });
 
   $('.closeParams').on('click', function(){
     showBlurPage('hide');
   })
+
+  $(document).on('click', '.closeFastProfiles', function(){
+    loadFastItems(params.profiles);
+    showBlurPage('parameters_page');
+  });
 
   $('.save_ml').on('click', function(){
     targetMl = parseInt($('#goalInput').val());
@@ -768,8 +855,10 @@ $(document).ready(function(){
       'before': sum
     }
 
-    params.recall.push(recallItem);
+    // verify that the hour is not already used
+    if (params.recall.some(item => item.before === sum)) return;
 
+    params.recall.push(recallItem);
     params.recall.sort((a, b) => {
       return a.before - b.before;
     });
@@ -779,11 +868,94 @@ $(document).ready(function(){
   });
 
   $('#enableNotifBtn').on('click', function(){
+    // ask for notification permission
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+        checkPaliers(params.recall);
+      };
+    });
+
     $(this).remove();
+  });
+
+  // History actions
+  $(document).on('click', '.history_undo_last', function(){
+    if(!waterhistory || waterhistory.length === 0) return;
+    const last = waterhistory[waterhistory.length - 1];
+    addMl(-1 * last.val);
+    waterhistory = waterhistory.slice(0, waterhistory.length - 1);
+    saveItem('waterhistory', waterhistory);
+    saveItem('waterlevel', ml);
+    loadHistoryItems(waterhistory);
+  });
+
+  $(document).on('click', '.history_undo_all', function(){
+    if(!waterhistory || waterhistory.length === 0) return;
+    // Subtract the sum to reflect visually
+    const total = waterhistory.reduce((s, e) => s + e.val, 0);
+    addMl(-1 * total);
+    waterhistory = [];
+    saveItem('waterhistory', waterhistory);
+    saveItem('waterlevel', ml);
+    loadHistoryItems(waterhistory);
+    showBlurPage('hide');
+  });
+
+  // Fast Profiles editor: live edits
+  $(document).on('input', '.fastProfiles_container .profile_skin', function(){
+    const $row = $(this).closest('.profileItemWrapper');
+    const id = $row.data('id');
+    const idx = getItemIndexByID(params.profiles, id);
+    params.profiles[idx].skin = $(this).val();
+    saveItem('parameters', params);
+    loadFastItems(params.profiles);
+  });
+
+  $(document).on('input', '.fastProfiles_container .profile_label', function(){
+    const $row = $(this).closest('.profileItemWrapper');
+    const id = $row.data('id');
+    const idx = getItemIndexByID(params.profiles, id);
+    params.profiles[idx].label = $(this).val();
+    saveItem('parameters', params);
+  });
+
+  $(document).on('input', '.fastProfiles_container .profile_value', function(){
+    const $row = $(this).closest('.profileItemWrapper');
+    const id = $row.data('id');
+    const idx = getItemIndexByID(params.profiles, id);
+    let v = parseInt($(this).val());
+    if(isNaN(v) || v < 1) v = 1;
+    params.profiles[idx].value = v;
+    saveItem('parameters', params);
+  });
+
+  // Delete profile
+  $(document).on('click', '.fastProfiles_container .profileItem_bin', function(){
+    const $row = $(this).closest('.profileItemWrapper');
+    const id = $row.data('id');
+    const idx = getItemIndexByID(params.profiles, id);
+    if(idx === false) return;
+    params.profiles = removeItem(params.profiles, idx);
+    saveItem('parameters', params);
+    renderFastProfilesEditor(params.profiles);
+  });
+
+  // Add profile
+  $(document).on('click', '.addProfileBtn', function(){
+    const newProfile = {
+      id: smallestAvailableId(params.profiles, 'id'),
+      skin: '🙂',
+      label: 'Profil',
+      value: 100
+    };
+    params.profiles.push(newProfile);
+    saveItem('parameters', params);
+    renderFastProfilesEditor(params.profiles);
   });
 
   loadFastItems(params.profiles);
   loadRecallItems(params.recall);
+  loadHistoryItems(waterhistory);
 
   checkPaliers(params.recall);
 })

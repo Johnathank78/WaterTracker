@@ -132,19 +132,37 @@
     
                     <div class="parameters_section">
                         <span class="parameters_sectionText">Profiles Rapides</span>
-                        <button class="parameters_btn danger">Supprimer</button>
+                        <button class="parameters_btn editProfiles validate">Editer</button>
+                    </div>
+
+                    <div class="parameters_section">
+                        <span class="parameters_sectionText">Historique</span>
+                        <div class="parameters_historyBody">
+                            <!-- Filled dynamically -->
+                        </div>
+                        <div class="history_footer">
+                            <button class="parameters_btn outline history_undo_last">Annuler le dernier</button>
+                            <button class="parameters_btn danger history_undo_all">Tout annuler</button>
+                        </div>
                     </div>
                 </div>
                 <button class="parameters_btn danger closeParams">Fermer</button>
             </div>
 
             <div class="fastProfile_page">
-                
+                <span class="parameters_pageText">Profils Rapides</span>
+                <div class="fastProfiles_masterContainer">
+                    <div class="fastProfiles_container"></div>
+                    <div class="fastProfile_actions">
+                        <button class="parameters_btn validate addProfileBtn">Ajouter un profil</button>
+                        <button class="parameters_btn outline closeFastProfiles">Valider</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="header">
-            <span class="versionNB">v1.9</span>
+            <span class="versionNB">v2.0</span>
             <img src="./resources/imgs/watertracker.png" alt="" class="header_logo">
             <div class="parameters">
                 <img src="./resources/imgs/parameters.svg" alt="" class="parameters_img">
