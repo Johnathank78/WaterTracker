@@ -85,12 +85,17 @@
     </script> -->
 
     <script src="./resources/js/jquery.js"></script>
+    <script src="./resources/js/bottomNotification.js"></script>
     <script src="./resources/js/app.js"></script>
 </head>
 
 <body>
     <div class="app noselect">  
         <!-- <div class="IOSbacker noselect" id="IOSbackerUI"></div> -->
+        <div class="bottomNotification noselect">
+            <img src="./resources/imgs/tick.png" alt="" class="bottomNotification_Icon">
+            <span class="bottomNotification_msg"></span>
+        </div>
 
         <div class="imgSet">
             <img src="./resources/imgs/add.svg" alt="" id="addIMG">
@@ -101,7 +106,7 @@
 
         <div class="blurBG">
             <div class="parameters_page">
-                <span class="versionNB">v2.1</span>
+                <span class="versionNB">v2.2</span>
                 <span class="panel_pageText">Parametres</span>
                 <div class="panel_masterContainer">
                     <div class="panel_section">
@@ -114,6 +119,9 @@
                     <div class="panel_section">
                         <span class="panel_sectionText">Paliers</span>
                         <div class="parameters_recallBody"></div>
+ 
+                        <div class="separator"></div>
+
                         <div class="reminder-grid add wrap">
                             <div class="parameters_recall_gridSection" style="grid-area: 1 / 1 / 2 / 2;">
                                 <label class="recall_label" for="newReminderAmount">Quantité</label>

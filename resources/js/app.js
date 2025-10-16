@@ -144,6 +144,8 @@ var stats;
 // Water variables
 var ml, pastML, targetMl
 var animating = false;
+// Snapshot of profiles when opening the editor to detect no-op closes
+var profilesSnapshotJSON = null;
 
 // UTILITY 
 function showBlurPage(className) {
@@ -828,9 +830,9 @@ function renderFastProfilesEditor(items){
   const $row = $(`
     <div class="profileItemWrapper">
       <div class="profileItem_inputs">
-        <input class="profile_skin" type="text" maxlength="2" value="😮" aria-label="Emoji"/>
-        <input class="profile_label" type="text" value="Gorgée" aria-label="Label"/>
-        <input class="profile_value" type="number" min="1" step="1" value="100" aria-label="Valeur (ml)"/>
+        <input class="profile_skin" placeholder=':)' type="text" maxlength="2" value="😮" aria-label="Emoji"/>
+        <input class="profile_label" placeholder='Label' type="text" value="Gorgée" aria-label="Label"/>
+        <input class="profile_value strictlyNumeric" placeholder='ml' type="number" min="1" step="1" value="100" aria-label="Valeur (ml)"/>
       </div>
       <div class="profileItem_bin">
         <img class="bin_img" src="./resources/imgs/bin.svg" alt="Supprimer le profil">
@@ -954,6 +956,7 @@ $(document).ready(function(){
     
     loadRecallItems(params.recall);
     saveItem('parameters', params);
+    // Notify deletion
   });
 
   $(document).on('click', '.fast_item', function(){
@@ -977,6 +980,8 @@ $(document).ready(function(){
 
   $('.parameters').on('click', function(){
     loadHistoryItems(waterhistory);
+    // Ensure goal input reflects saved value when opening
+    try { $('#goalInput').val(params.goal); } catch(_) {}
     showBlurPage('parameters_page');
   });
 
@@ -1002,23 +1007,82 @@ $(document).ready(function(){
 
   $('.editProfiles').on('click', function(){
     renderFastProfilesEditor(params.profiles);
+    // Take a snapshot to detect whether anything changes before closing
+    try { profilesSnapshotJSON = JSON.stringify(params.profiles); } catch(_) { profilesSnapshotJSON = null; }
     showBlurPage('fastProfile_page');
   });
 
   $('.closeParams').on('click', function(){
+    // Rollback goal input to the last saved value when closing without saving
+    try { $('#goalInput').val(params.goal); } catch(_) {}
     showBlurPage('hide');
   })
 
   $(document).on('click', '.closeFastProfiles', function(){
+    // Validate profiles before closing
+    const $rows = $('.fastProfiles_container .profileItemWrapper');
+    let ok = true;
+    $rows.each(function(){
+      const $row = $(this);
+      const skin = String($row.find('.profile_skin').val() || '').trim();
+      const label = String($row.find('.profile_label').val() || '').trim();
+      const valueRaw = String($row.find('.profile_value').val() || '').trim();
+      const value = parseInt(valueRaw, 10);
+      if(!skin || !label || !valueRaw || isNaN(value) || value < 1){
+        ok = false;
+        return false; // break
+      }
+    });
+    if(!ok){
+      try { bottomNotification && bottomNotification('invalidProfile', 'Complétez tous les profils avec des valeurs valides'); } catch(_) {}
+      return;
+    }
+    // Persist normalized values
+    $rows.each(function(){
+      const $row = $(this);
+      const id = $row.data('id');
+      const idx = getItemIndexByID(params.profiles, id);
+      params.profiles[idx].skin = String($row.find('.profile_skin').val()).trim();
+      params.profiles[idx].label = String($row.find('.profile_label').val()).trim();
+      params.profiles[idx].value = parseInt(String($row.find('.profile_value').val()).trim(), 10);
+    });
+    saveItem('parameters', params);
     loadFastItems(params.profiles);
+    // Notify only if something actually changed since opening
+    let hasChanges = true;
+    try {
+      const currentJSON = JSON.stringify(params.profiles);
+      if (profilesSnapshotJSON !== null && profilesSnapshotJSON === currentJSON) {
+        hasChanges = false;
+      }
+    } catch(_) { /* keep hasChanges = true on JSON issues */ }
+    if (hasChanges) {
+      try { bottomNotification && bottomNotification('updated', 'Profils enregistrés'); } catch(_) {}
+    }
     showBlurPage('parameters_page');
   });
 
   $('.save_ml').on('click', function(){
-    targetMl = parseInt($('#goalInput').val());
+    const raw = String($('#goalInput').val() || '').trim();
+    const n = parseInt(raw, 10);
+    if(!raw){
+      try { bottomNotification && bottomNotification('missingFields', 'Objectif manquant'); } catch(_) {}
+      return;
+    }
+    if(isNaN(n) || n < 1){
+      try { bottomNotification && bottomNotification('invalidNumber', 'Objectif invalide'); } catch(_) {}
+      return;
+    }
+    // If unchanged, just close without notifying
+    if (n === params.goal) {
+      showBlurPage('hide');
+      return;
+    }
+    targetMl = n;
     params.goal = targetMl;
     
     saveItem('parameters', params);
+    try { bottomNotification && bottomNotification('updated', 'Objectif mis à jour'); } catch(_) {}
     showBlurPage('hide');
   });
 
@@ -1034,22 +1098,44 @@ $(document).ready(function(){
   });
 
   $('#addReminderBtn').on('click', function(){
-    let mlVal = $('#newReminderAmount').val();
-    let time = $('#newReminderTime').val();
+    const mlRaw = String($('#newReminderAmount').val() || '').trim();
+    const time = String($('#newReminderTime').val() || '').trim();
 
-    let hour = parseInt(time.split(':')[0]) * 60
-    let min = parseInt(time.split(':')[1])
-
-    let sum = hour + min;
-
-    let recallItem = {
-      'id': smallestAvailableId(params.recall, 'id'),
-      'qty': parseInt(mlVal),
-      'before': sum
+    if(!mlRaw || !time){
+      try { bottomNotification && bottomNotification('missingFields', 'Veuillez renseigner quantité et heure'); } catch(_) {}
+      return;
+    }
+    const mlVal = parseInt(mlRaw, 10);
+    if(isNaN(mlVal) || mlVal < 1){
+      try { bottomNotification && bottomNotification('invalidNumber', 'Quantité invalide'); } catch(_) {}
+      return;
+    }
+    if(!/^\d{2}:\d{2}$/.test(time)){
+      try { bottomNotification && bottomNotification('invalidTime', 'Format heure HH:MM'); } catch(_) {}
+      return;
     }
 
+    const parts = time.split(':');
+    const hh = parseInt(parts[0], 10);
+    const mm = parseInt(parts[1], 10);
+    if(isNaN(hh) || isNaN(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59){
+      try { bottomNotification && bottomNotification('invalidTime', 'Heure invalide'); } catch(_) {}
+      return;
+    }
+
+    const sum = hh * 60 + mm;
+
     // verify that the hour is not already used
-    if (params.recall.some(item => item.before === sum)) return;
+    if (params.recall.some(item => item.before === sum)){
+      try { bottomNotification && bottomNotification('duplicateTime'); } catch(_) {}
+      return;
+    }
+
+    const recallItem = {
+      'id': smallestAvailableId(params.recall, 'id'),
+      'qty': mlVal,
+      'before': sum
+    }
 
     params.recall.push(recallItem);
     params.recall.sort((a, b) => {
@@ -1065,10 +1151,25 @@ $(document).ready(function(){
     Notification.requestPermission().then(permission => {
       if (permission === "granted") {
         checkPaliers(params.recall);
+        try { bottomNotification && bottomNotification('updated', 'Notifications activées'); } catch(_) {}
+      } else if (permission === 'denied') {
+        try { bottomNotification && bottomNotification('invalid', 'Notifications refusées'); } catch(_) {}
       };
     });
 
     $(this).remove();
+  });
+
+  // Enforce strictly numeric behavior on numeric inputs
+  try {
+    $('#goalInput, #newReminderAmount').attr({ inputmode: 'numeric', pattern: '\\d*' });
+  } catch(_) {}
+
+  $(document).on('input', '#goalInput, #newReminderAmount, .profile_value', function(){
+    const cleaned = String($(this).val() || '').replace(/\D+/g, '');
+    if($(this).val() !== cleaned){
+      $(this).val(cleaned);
+    }
   });
 
   // History actions
@@ -1145,6 +1246,31 @@ $(document).ready(function(){
     params.profiles.push(newProfile);
     saveItem('parameters', params);
     renderFastProfilesEditor(params.profiles);
+  });
+
+  // inputs
+
+  $(document).on("keydown", ".strictlyNumeric", function (e) {
+    let allowedKeys = [..."0123456789", "Backspace", "ArrowLeft", "ArrowRight", "Delete", "Tab"];
+
+    if (!allowedKeys.includes(e.key)) {
+      e.preventDefault();
+    }
+  });
+
+  $(document).on("keydown", ".strictlyFloatable", function (e) {
+    let allowedKeys = [..."0123456789.,", "Backspace", "ArrowLeft", "ArrowRight", "Delete", "Tab"];
+
+    if((e.key === "," || e.key === ".") && !$(this).val().includes(".")){
+      e.preventDefault();
+      $(this).val($(this).val() + ".");
+    }else if((e.key === "," || e.key === ".") && $(this).val().includes(".")){
+      e.preventDefault();
+    };
+
+    if (!allowedKeys.includes(e.key)) {
+      e.preventDefault();
+    };
   });
 
   loadFastItems(params.profiles);

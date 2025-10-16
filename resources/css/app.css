@@ -463,6 +463,16 @@ body{
     box-shadow: 0px 0px 10px 5px var(--shadow);
 }
 
+.separator{
+    align-self: center;
+    margin: 5px 0 10px 0;
+    width: 20%;
+    height: 2px;
+    border-radius: 4px;
+
+    background-color: #e5efff;
+}
+
 /* Duplicate of parameters_section for fast profiles */
 .fastProfiles_section{
     position: relative;
@@ -836,4 +846,54 @@ input[type="number"], input[type="time"], input[type="text"], select {
 
     font-size: 16px;
     font-weight: 800;
+}
+
+.bottomNotification{
+    z-index: 1001;
+    position: absolute;
+    
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+
+    align-items: center;
+
+    height: 50px;
+    
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+    max-width: 80vw;
+    
+    bottom: -55px;
+
+    padding: 0px 15px 0px 15px;
+    border-radius: 12px;
+    
+    background-color: #85daaa;
+    
+    overflow: scroll;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+
+    display: none;
+}
+
+.bottomNotification::-webkit-scrollbar{
+    display: none;
+}
+
+.bottomNotification_Icon{
+    filter: invert(25%) sepia(14%) saturate(3278%) hue-rotate(99deg) brightness(94%) contrast(89%);
+    width: 14px;
+    height: 14px;
+
+    margin-top: -4px;
+}
+
+.bottomNotification_msg{
+    color: #0e5a2e;
+    font-weight: 500;
+    font-size: 18px;
 }
